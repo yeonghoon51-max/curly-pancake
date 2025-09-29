@@ -1,0 +1,43 @@
+plugins {
+    id 'fabric-loom' version '1.10.5'
+    id 'maven-publish'
+}
+group = 'net.smartmoving'
+version = '1.0.0'
+
+repositories {
+    maven { name 'Mojang'; url 'https://libraries.minecraft.net/' }
+    mavenCentral()
+    maven { url = 'https://maven.fabricmc.net/' }
+    maven { url = 'https://maven.minecraftforge.net' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:1.21.6"
+    mappings "net.fabricmc:yarn:1.21.6+build.1:v2"
+    modImplementation "net.fabricmc:fabric-loader:0.16.14"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:0.127.1+1.21.6"
+}
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
+    withSourcesJar()
+}
+
+loom { splitEnvironmentSourceSets() }
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.release = 21
+}
+
+jar {
+    from("LICENSE") { rename { "LICENSE_${project.name}" } }
+}

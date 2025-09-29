@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "smartstarter",
+  "version": "${version}",
+  "name": "SmartStarter",
+  "description": "Movement features for 1.21.6",
+  "authors": [
+    "You"
+  ],
+  "license": "CC0-1.0",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.smartmoving.smartstarter.SmartStarter"
+    ],
+    "client": [
+      "net.smartmoving.smartstarter.SmartStarterClient"
+    ]
+  },
+  "mixins": [
+    "smartstarter.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.14",
+    "fabric-api": "*",
+    "minecraft": "1.21.6",
+    "java": ">=21"
+  },
+  "icon": "assets/smartstarter/icon.png"
+}

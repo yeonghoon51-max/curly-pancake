@@ -1,0 +1,17 @@
+pluginManagement {
+  repositories {
+    maven { url 'https://maven.fabricmc.net/' }
+    gradlePluginPortal()
+  }
+}
+
+dependencyResolutionManagement {
+  repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+  repositories {
+    mavenCentral()
+    maven { url 'https://maven.fabricmc.net/' }
+    maven { name 'Mojang'; url 'https://libraries.minecraft.net/' }
+  }
+}
+
+rootProject.name = 'SmartStarter-1.21.6'
