@@ -98,14 +98,18 @@ jobs:
 
       # 빌드 + remapJar(배포용) 생성
       - name: Build (remap)
-        run: ./gradlew --stacktrace --warning-mode all --refresh-dependencies build remapJar
+        run: |
+          ./gradlew --stacktrace --warning-mode all --refresh-dependencies clean build remapJar
+          echo "== Built files ==" && ls -al build/libs || true
 
-      - name: List outputs
-        run: ls -al build/libs || true
-
-      # remapped JAR 업로드
       - name: Upload Jar artifact
         uses: actions/upload-artifact@v4
         with:
           name: SmartStarter-jar
-          path: build/libs/*-remapped.jar
+          # remapped 이름이 바뀌어도 잡히도록 폭넓게 지정
+          path: |
+            build/libs/*-remapped.jar
+            build/libs/*-mapped.jar
+            build/libs/*[0-9].jar
+            build/libs/*.jar
+          if-no-files-found: warn
