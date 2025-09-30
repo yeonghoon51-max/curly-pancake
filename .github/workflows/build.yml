@@ -29,7 +29,7 @@ jobs:
             }
           }
           dependencyResolutionManagement {
-            // Loom이 내부 repo를 추가할 수 있도록, settings 우선 + 프로젝트 허용
+            // Loom이 내부 repo를 추가할 수 있도록 settings 우선
             repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
             repositories {
               mavenCentral()
@@ -40,7 +40,7 @@ jobs:
           rootProject.name = 'SmartStarter-1.21.6'
           EOF
 
-      # build.gradle: Fabric API 제거(로더만), repositories는 settings에만
+      # build.gradle: Yarn 제거 → 공식 모장 맵핑 사용, Fabric API도 제거
       - name: Write build.gradle
         shell: bash
         run: |
@@ -55,9 +55,10 @@ jobs:
 
           dependencies {
               minecraft "com.mojang:minecraft:1.21.6"
-              mappings "net.fabricmc:yarn:1.21.6+build.1:v2"
+              // Yarn 대신 공식 모장 맵핑 사용 (우리 코드는 MC 클래스 직접 참조 없음)
+              mappings loom.officialMojangMappings()
               modImplementation "net.fabricmc:fabric-loader:0.16.14"
-              // Fabric API는 나중에 필요할 때만 추가
+              // Fabric API는 필요해질 때만 추가
           }
 
           java {
