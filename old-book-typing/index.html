@@ -92,11 +92,14 @@
         </div>
         <button type="button" class="pill" id="guideToggle">가로 안내줄</button>
         <button type="button" class="pill" id="soundToggle">효과음</button>
+        <button type="button" class="pill" id="focusBtn" title="책 화면을 크게 (Esc로 나가기)">⛶ 크게 보기</button>
       </div>
     </div>
 
     <div class="bookbody">
       <div class="vertical-stage" id="verticalStage">
+        <!-- 크게 보기에서만 보이는 작은 통계 줄 -->
+        <div class="mini-stats" id="miniStats"></div>
         <div class="columns" id="columns"></div>
         <div class="stage-foot">
           <div class="hguide" id="hGuide"><div class="hg-track" id="hgTrack"></div></div>

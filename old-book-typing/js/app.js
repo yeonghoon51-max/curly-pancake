@@ -426,7 +426,42 @@ function updateStats(){
   $('elapsed').textContent = fmtTime(Math.floor(elapsedMs() / 1000));
   const best = bestOf(curLesson().id);
   $('bestCpm').innerHTML = best ? `${best}<small>타</small>` : '–';
+  // 크게 보기용 작은 통계 줄 (오른쪽 패널과 같은 값)
+  if(isFocus()){
+    $('miniStats').innerHTML =
+        `<span>타수<b>${$('cpm').textContent}</b></span>`
+      + `<span>정확도<b>${$('accuracy').textContent}</b></span>`
+      + `<span>진행<b>${pct}%</b></span>`
+      + `<span>오타<b>${state.live.wrong}</b></span>`
+      + `<span>시간<b>${$('elapsed').textContent}</b></span>`
+      + (best ? `<span class="best">최고<b>${best}</b></span>` : '')
+      + `<span class="mini-bar"><i style="width:${pct}%"></i></span>`;
+  }
 }
+
+/* ---------------- 크게 보기 (집중 모드) ---------------- */
+// 화면 전체(문서)를 전체 화면으로 띄우고, CSS로 책 화면만 꽉 채운다.
+// 문서 전체를 띄우는 이유: 결과창 같은 다른 창도 전체 화면 안에서 보여야 하기 때문.
+const isFocus = () => $('practice').classList.contains('focus');
+let focusExitAt = 0;
+function setFocus(on){
+  $('practice').classList.toggle('focus', on);
+  document.body.classList.toggle('focus-lock', on);
+  $('focusBtn').textContent = on ? '⛶ 작게 보기' : '⛶ 크게 보기';
+  $('focusBtn').classList.toggle('active', on);
+  if(on){
+    const el = document.documentElement;
+    if(el.requestFullscreen && !document.fullscreenElement) el.requestFullscreen().catch(() => {});   // 안 되는 기기는 창 안에서만 크게
+  }else{
+    focusExitAt = Date.now();
+    if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  }
+  requestAnimationFrame(() => { update(); centerCurrentColumn(false); });
+  typing.focus({ preventScroll:true });
+}
+document.addEventListener('fullscreenchange', () => {
+  if(!document.fullscreenElement && isFocus()) setFocus(false);   // 브라우저에서 Esc로 전체 화면을 나간 경우
+});
 
 // 0.5초마다 시계·타수를 새로 고치고, 그래프용 표본을 1초 간격으로 모은다.
 setInterval(() => {
@@ -629,6 +664,7 @@ function focusTyping(){
   typing.focus({ preventScroll:true });
 }
 function practiceInView(){
+  if(isFocus()) return true;
   const r = $('practice').getBoundingClientRect();
   return r.bottom > 80 && r.top < innerHeight - 80;
 }
@@ -636,6 +672,7 @@ function practiceInView(){
 stage.addEventListener('click', focusTyping);
 $('startBtn').addEventListener('click', focusTyping);
 $('restartBtn').addEventListener('click', () => { retryLesson(); flashStatus('처음부터 다시 씁니다'); });
+$('focusBtn').addEventListener('click', () => setFocus(!isFocus()));
 $('prevBtn').addEventListener('click', () => loadLesson(state.idx - 1, { scroll:false }));
 $('nextBtn').addEventListener('click', () => loadLesson(state.idx + 1, { scroll:false }));
 $('retryBtn').addEventListener('click', retryLesson);
@@ -711,7 +748,13 @@ document.addEventListener('keydown', e => {
   }
 
   if(document.activeElement === typing){
-    if(e.key === 'Escape' && !e.isComposing){ e.preventDefault(); retryLesson(); flashStatus('처음부터 다시 씁니다'); return; }
+    if(e.key === 'Escape' && !e.isComposing){
+      e.preventDefault();
+      // 크게 보기에서 누른 Esc는 '나가기'로만 쓴다 (실수로 처음부터 다시 시작되지 않게)
+      if(isFocus()){ setFocus(false); return; }
+      if(Date.now() - focusExitAt < 400) return;
+      retryLesson(); flashStatus('처음부터 다시 씁니다'); return;
+    }
     // 보이지 않는 입력창이라 커서가 중간으로 옮겨지면 화면과 어긋나므로 이동 키는 막는다.
     if(NAV_KEYS.includes(e.key)){ e.preventDefault(); return; }
     if(!state.completed && (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Process')) playClick();
