@@ -30,10 +30,10 @@
 :root[data-theme="dark"]{
   --bg:#1a1713; --bg-deep:#14110e;
   --paper:#221e19; --bar:#2a251f; --side:#1f1b17; --card:#26211c; --chip:#2c2620; --soft:#352e26;
-  --ink:#ece3d2; --muted:#a59985; --faint:#5f5649; --line:#3b332a; --rule:rgba(230,210,180,.07);
+  --ink:#ece3d2; --muted:#a59985; --faint:#8c806d; --line:#3b332a; --rule:rgba(230,210,180,.11);
   --accent:#e0937a; --accent-soft:#3a2a22; --accent2:#c0936b; --on-accent:#2a1710;
   --green:#93b99a; --red:#ff7363; --gold:#d6aa5c;
-  --gloss-dim:#4f463b; --mark:#665a4b; --pn-dim:#b08d74;
+  --gloss-dim:#75695a; --mark:#7d7060; --pn-dim:#b08d74;
   --leaf:#25211b; --frame:rgba(225,195,160,.32); --frame-ink:rgba(225,195,160,.5);
   --shadow:0 18px 50px rgba(0,0,0,.4);
   --overlay:rgba(0,0,0,.62);
@@ -139,6 +139,8 @@ button.pill.active{border-color:var(--accent2);color:var(--accent);background:va
 .col .gloss span.gap{height:5px}
 
 /* ---------- 4. 글자 상태 ---------- */
+/* 먹 테마: 어두운 바탕에서는 가는 명조 획이 뭉개져 보이므로 한 단계 굵게 */
+:root[data-theme="dark"] .col .text,:root[data-theme="dark"] .hg-track{font-weight:500}
 .col .text span{position:relative;color:var(--faint);transition:color .08s ease}
 .col .text span.sp{letter-spacing:.2em}
 .col .text span.correct{color:var(--ink)}
