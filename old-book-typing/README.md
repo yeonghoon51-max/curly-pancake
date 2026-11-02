@@ -4,7 +4,9 @@
 
 ## 실행
 
-`index.html`을 더블클릭하거나 VS Code의 Live Server로 열면 됩니다.
+`index.html`을 더블클릭하면 타자연습은 바로 됩니다.
+문헌 원문 페이지·약관 페이지 사이를 오가는 링크까지 확인하려면 **VS Code의 Live Server**로 여세요
+(파일을 직접 열면 `../` 같은 폴더 주소가 `index.html`로 연결되지 않습니다).
 GitHub Pages에 올릴 때는 **`old-book-typing` 폴더를 통째로** 올리세요 (css·js 폴더가 함께 있어야 합니다).
 
 ## 인터넷에 공개하고 검색되게 하기
@@ -40,6 +42,38 @@ GitHub Pages에 올릴 때는 **`old-book-typing` 폴더를 통째로** 올리�
 - `robots.txt`, `sitemap.xml`, 파비콘(`favicon.svg`)
 - 자바스크립트 없이도 읽히는 소개 문구 (검색엔진 수집용)
 
+### 3단계: 검색 결과를 metrotyping.kr 처럼 보이게 하기
+
+| 검색 결과의 부분 | 만드는 방법 | 상태 |
+|---|---|---|
+| 맨 위 사이트 이름 (`metrotyping.kr` 자리) | `WebSite` 구조화 데이터의 `name` | ✅ "옛글자" |
+| 동그란 아이콘 | 48px 배수 정사각형 파비콘 | ✅ `favicon-48.png` 등 |
+| 파란 제목 | `<title>` — "이름 (영문) \| 하는 일" | ✅ |
+| 회색 설명 | `meta description` | ✅ |
+| 아래 하위 링크 (사이트링크) | 따로 떨어진 페이지 여러 개 + 서로 링크 | ✅ 문헌 4쪽, 이용약관, 개인정보처리방침 |
+| 짧고 기억하기 쉬운 주소 | **도메인 구입** (예: `yetgeulja.kr`) | ⬜ 직접 해야 함 |
+| 사이트링크가 실제로 뜨는 것 | 구글이 자동으로 결정 — 방문자와 검색이 쌓여야 함 | ⬜ 시간 필요 |
+
+**도메인을 쓰려면**
+1. 가비아·후이즈·Cloudflare 등에서 도메인 구입 (`.kr` 기준 1년 약 1~2만 원)
+2. GitHub 저장소 **Settings → Pages → Custom domain** 에 도메인 입력, 안내대로 DNS 설정
+3. `scripts/build-pages.js` 의 `SITE` 를 새 주소로 바꾸고 `node scripts/build-pages.js` 실행 → push
+
+> 구글은 사이트 이름을 **도메인(또는 하위 도메인) 단위**로만 붙입니다.
+> 지금 주소(`…github.io/curly-pancake/`)는 폴더 단위라 "옛글자"라는 이름이 안 뜰 수 있어요.
+
+## 페이지 생성기
+
+문헌 원문 페이지(`lessons/*.html`), `terms.html`, `privacy.html`, `sitemap.xml`, `robots.txt`, `index.html` 바닥글은
+**`scripts/build-pages.js` 가 만듭니다.** 문헌을 추가하거나 주소를 바꾼 뒤 저장소 맨 위 폴더에서 실행하세요.
+
+```bash
+node scripts/build-pages.js
+```
+
+약관 내용은 `scripts/content/terms.html`, `privacy.html` 을 고친 뒤 다시 실행하면 됩니다.
+(기본 틀로 작성한 문서이므로 서비스 형태가 바뀌면 내용도 맞게 고쳐 주세요.)
+
 ## 저작권
 - **원문**(한문·옛한글): 15세기 문헌이라 저작권 보호기간이 끝난 공유 저작물입니다.
 - **현대어 풀이**: 이 사이트가 학습용으로 새로 풀어 쓴 문장입니다. 기관·출판사 번역문을 옮기지 않았습니다.
@@ -56,7 +90,10 @@ old-book-typing/
 └─ js/
    ├─ lessons.js     수록 문헌 데이터  ← 새 문헌은 여기에 추가
    ├─ hangul.js      자모 분해 · 옛한글 글자 나누기
-   └─ app.js         입력 판정 · 기록 · 설정 등 동작
+   ├─ app.js         입력 판정 · 기록 · 설정 등 동작
+   └─ theme.js       하위 페이지 테마 전환
+lessons/             문헌별 원문·풀이 페이지 (자동 생성)
+terms.html, privacy.html   이용약관 · 개인정보처리방침 (자동 생성)
 ```
 
 ## 기능

@@ -506,6 +506,7 @@ function renderCards(){
         <h3>${esc(l.book)}</h3>${l.title ? `<div class="sub">${esc(l.title)}</div>` : ''}
         <p>${esc(l.desc || '')}</p>
         <div class="meta">${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}${best ? `<span class="tag gold">최고 ${best}타</span>` : ''}</div>
+        ${l.custom ? '' : `<a class="card-link" href="lessons/${esc(l.id)}.html">원문과 풀이 보기 →</a>`}
         ${l.custom ? `<button type="button" class="card-del" data-del="${esc(l.id)}" aria-label="이 글 지우기" title="지우기">✕</button>` : ''}
       </article>`;
   }).join('');
@@ -620,6 +621,7 @@ $('practice').addEventListener('click', e => {
 $('cards').addEventListener('click', e => {
   const del = e.target.closest('[data-del]');
   if(del){ e.stopPropagation(); deleteCustom(del.dataset.del); return; }
+  if(e.target.closest('a')) return;                 // 원문 페이지 링크는 그대로 이동
   if(e.target.closest('#addCustom')){ openCustom(); return; }
   const card = e.target.closest('.card[data-i]');
   if(card) loadLesson(+card.dataset.i);
@@ -709,7 +711,9 @@ window.addEventListener('resize', () => { update(); });
 
 /* ---------------- 시작 ---------------- */
 applyTheme(); applySize(); applyToggles();
-state.idx = Math.max(0, allLessons().findIndex(l => l.id === settings.lastId));
+// 주소에 ?lesson=문헌id 가 있으면 그 문헌으로 (원문 페이지의 '타자 연습하기' 단추), 없으면 마지막으로 보던 문헌
+const wanted = new URLSearchParams(location.search).get('lesson') || settings.lastId;
+state.idx = Math.max(0, allLessons().findIndex(l => l.id === wanted));
 render();
 renderRecords();
 // 처음부터 입력창이 켜져 있어야 첫 키도 한글 입력기를 거친다.

@@ -296,3 +296,37 @@ footer{padding:28px 5vw;border-top:1px solid var(--line);color:var(--muted);font
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
 }
+
+/* ---------- 10. 하위 페이지 (문헌 원문 · 이용약관 · 개인정보) ---------- */
+.doc{max-width:860px;margin:0 auto;padding:34px 5vw 70px}
+.crumbs{font-size:13px;color:var(--muted);margin-bottom:18px}
+.crumbs a{color:var(--muted);text-decoration:none}
+.crumbs a:hover{color:var(--accent);text-decoration:underline}
+.doc h1{font-size:clamp(28px,4vw,40px);margin:6px 0 12px}
+.doc .lead{font-size:16px;line-height:1.9;color:var(--muted);margin:0 0 18px}
+.doc h2{font-size:21px;margin:44px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.doc h3{font-size:16px;margin:26px 0 8px}
+.doc p,.doc li{font-size:15px;line-height:1.95}
+.doc ul,.doc ol{padding-left:22px}
+.doc a{color:var(--accent)}
+.doc .meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
+.cta{display:inline-flex;align-items:center;gap:8px;text-decoration:none;border-radius:8px;padding:13px 22px;font-size:15px;font-weight:600;background:var(--accent);color:var(--on-accent)!important}
+.cta:hover{filter:brightness(.94)}
+.verse{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:18px 22px;margin-bottom:12px}
+.verse .no{font-size:12px;color:var(--accent);letter-spacing:.08em}
+.verse .modern{font-size:17px;line-height:1.9;margin:6px 0 10px;color:var(--ink)}
+.verse dl{margin:0;display:grid;grid-template-columns:64px 1fr;gap:4px 12px;font-size:14px;line-height:1.85}
+.verse dt{color:var(--muted);font-size:12px;padding-top:3px}
+.verse dd{margin:0}
+.verse dd.eonhae{font-family:var(--oldhangul)}
+.related{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;padding:0;list-style:none}
+.related a{display:block;border:1px solid var(--line);background:var(--card);border-radius:6px;padding:14px 16px;text-decoration:none;color:var(--ink)!important}
+.related a:hover{border-color:var(--accent2)}
+.related small{display:block;color:var(--muted);font-size:12px}
+.updated{font-size:13px;color:var(--muted)}
+.card .card-link{font-size:12.5px;color:var(--accent);text-decoration:none;margin-top:4px;align-self:flex-start}
+.card .card-link:hover{text-decoration:underline}
+.foot-links{display:flex;flex-wrap:wrap;gap:6px 16px;margin-bottom:10px}
+.foot-links a{color:var(--muted);text-decoration:none}
+.foot-links a:hover{color:var(--accent);text-decoration:underline}
+@media(max-width:620px){ .verse dl{grid-template-columns:1fr} .verse dt{padding-top:6px} }

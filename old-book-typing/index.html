@@ -3,17 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>옛글자 — 훈민정음·고서 세로쓰기 타자연습</title>
+  <!-- 검색 결과의 파란 제목: "사이트 이름 (영문) | 무엇을 하는 곳" 형식 -->
+  <title>옛글자 타자연습 (Yetgeulja) | 훈민정음·고서 세로쓰기 타자</title>
   <meta name="description" content="훈민정음 서문, 용비어천가, 세종실록을 옛 책처럼 세로쓰기 화면에서 따라 치는 무료 한글 타자연습. 언해본·한문 원문을 곁글로 보며 타수와 정확도를 기록합니다." />
   <meta name="keywords" content="타자연습, 한글 타자연습, 훈민정음, 세로쓰기, 고서, 용비어천가, 세종실록, 언해본, 옛한글, 역사 타자" />
   <meta name="theme-color" content="#7c3f2f" />
-  <!-- 사이트 주소가 바뀌면 아래 canonical·og:url·og:image 와 sitemap.xml·robots.txt 의 주소를 함께 바꾸세요 -->
+  <!-- 사이트 주소는 scripts/build-pages.js 의 SITE 를 바꾸고 다시 실행하면 이 파일까지 함께 바뀝니다 -->
   <link rel="canonical" href="https://yeonghoon51-max.github.io/curly-pancake/" />
+  <!-- 검색 결과 왼쪽 동그란 아이콘: 구글은 48px 배수의 정사각형 아이콘을 씁니다 -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="favicon-48.png" sizes="48x48" type="image/png" />
+  <link rel="icon" href="favicon-192.png" sizes="192x192" type="image/png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="manifest" href="site.webmanifest" />
   <!-- 카카오톡·페이스북 등에 링크를 붙였을 때 보이는 미리보기 -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="옛글자" />
-  <meta property="og:title" content="옛글자 — 훈민정음·고서 세로쓰기 타자연습" />
+  <meta property="og:title" content="옛글자 타자연습 | 훈민정음·고서 세로쓰기 타자" />
   <meta property="og:description" content="옛 책을 읽고, 오늘의 손으로 쓰다. 훈민정음과 조선의 기록을 세로쓰기로 따라 치는 무료 타자연습." />
   <meta property="og:url" content="https://yeonghoon51-max.github.io/curly-pancake/" />
   <meta property="og:image" content="https://yeonghoon51-max.github.io/curly-pancake/og-image.png" />
@@ -21,19 +27,31 @@
   <meta property="og:image:height" content="630" />
   <meta property="og:locale" content="ko_KR" />
   <meta name="twitter:card" content="summary_large_image" />
-  <!-- 검색엔진이 이 사이트를 '웹 앱'으로 이해하도록 돕는 구조화 데이터 -->
+  <!-- 구조화 데이터
+       WebSite        → 검색 결과 맨 위 '사이트 이름'(metrotyping.kr 자리)을 정하는 데 쓰임
+       WebApplication → 이 사이트가 무료 교육용 웹 앱임을 알림 -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "옛글자 — 훈민정음·고서 세로쓰기 타자연습",
-    "url": "https://yeonghoon51-max.github.io/curly-pancake/",
-    "applicationCategory": "EducationalApplication",
-    "operatingSystem": "웹 브라우저",
-    "inLanguage": "ko",
-    "description": "훈민정음 서문, 용비어천가, 세종실록을 세로쓰기 화면에서 따라 치는 무료 한글 타자연습",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" }
-  }
+  [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "옛글자",
+      "alternateName": ["옛글자 타자연습", "Yetgeulja", "고서 타자연습"],
+      "url": "https://yeonghoon51-max.github.io/curly-pancake/",
+      "inLanguage": "ko"
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "옛글자 타자연습",
+      "url": "https://yeonghoon51-max.github.io/curly-pancake/",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "웹 브라우저",
+      "inLanguage": "ko",
+      "description": "훈민정음 서문, 용비어천가, 세종실록을 세로쓰기 화면에서 따라 치는 무료 한글 타자연습",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" }
+    }
+  ]
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -189,10 +207,23 @@
   </div>
 </main>
 
+<!-- SITE-FOOTER:START (scripts/build-pages.js 가 채움) -->
 <footer>
+  <nav class="foot-links" aria-label="문헌">
+    <a href="lessons/hunmin-eoje.html">훈민정음 어제 서문</a>
+    <a href="lessons/hunmin-jeonginji.html">훈민정음 해례본 정인지 서문</a>
+    <a href="lessons/yongbi-1-2.html">용비어천가 제1장 · 제2장</a>
+    <a href="lessons/sejong-sillok-1443.html">세종실록 훈민정음 창제 기사</a>
+  </nav>
+  <nav class="foot-links" aria-label="사이트 정보">
+    <a href="./#library">문헌 목록</a>
+    <a href="terms.html">이용약관</a>
+    <a href="privacy.html"><strong>개인정보처리방침</strong></a>
+    <a href="./#license">출처 및 저작권</a>
+  </nav>
   옛글자 · 고서 타자연습 — 원문은 15세기 공유 저작물이며, 현대어 풀이는 이 사이트가 학습용으로 새로 쓴 글입니다.
-  <a href="#license">출처 및 저작권 안내</a>
 </footer>
+<!-- SITE-FOOTER:END -->
 
 <!-- ================= 결과창 ================= -->
 <div class="overlay" id="resultOverlay" hidden>
