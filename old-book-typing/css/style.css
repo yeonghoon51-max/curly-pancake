@@ -191,6 +191,27 @@ button.pill.active{border-color:var(--accent2);color:var(--accent);background:va
 .type-hint small{font-weight:400;color:var(--muted);font-size:13px}
 .type-hint[hidden]{display:none}
 
+/* ---------- 5-1. 크게 보기 (집중 모드) ----------
+   책 화면만 화면 전체에 띄우고, 오른쪽 패널 대신 책 위에 작은 통계 줄을 보여 준다.
+   글자 크기는 화면 높이에 맞춰 자동으로 정해진다. */
+.mini-stats{display:none}
+.book.focus{position:fixed;inset:0;z-index:40;border:0;border-radius:0;box-shadow:none;display:flex;flex-direction:column}
+.book.focus .bookbody{flex:1;min-height:0;grid-template-columns:1fr}
+.book.focus .side,.book.focus #sizeSeg{display:none}
+.book.focus .vertical-stage{justify-content:center;padding:12px 3vw 14px}
+.book.focus .columns{--f:clamp(18px, calc((100vh - 300px) / 16.4), 44px)}
+/* 장이 화면보다 좁으면 가운데로. auto 여백은 넘칠 때 0이 되어 스크롤이 망가지지 않는다 */
+.book.focus .leaf:first-child{margin-right:auto}
+.book.focus .leaf:last-child{margin-left:auto}
+.book.focus .hguide{font-size:20px}
+.book.focus .mini-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 22px;margin:0 auto 12px;
+  font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mini-stats b{color:var(--ink);font-weight:700;margin-left:5px}
+.mini-stats .best b{color:var(--gold)}
+.mini-stats .mini-bar{flex-basis:100%;height:3px;border-radius:3px;background:var(--soft);overflow:hidden;max-width:520px;margin:2px auto 0}
+.mini-stats .mini-bar i{display:block;height:100%;background:var(--accent);transition:width .15s}
+body.focus-lock{overflow:hidden}
+
 /* ---------- 6. 오른쪽 패널 ---------- */
 .side{border-left:1px solid var(--line);padding:22px;background:var(--side);display:flex;flex-direction:column}
 .side h2{font-size:17px;margin:0 0 6px}
