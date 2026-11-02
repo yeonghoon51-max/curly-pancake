@@ -233,35 +233,29 @@ function fillGloss(pos){
   }
 }
 
-// 지금 치는 문장을 아래 안내줄에 가로로 보여준다 (세로 화면의 글자 상태를 그대로 옮김).
-// 앞 문장과 다음 문장도 흐리게 이어 붙여서, 문장이 끝나도 안내줄이 끊기지 않고 흘러간다.
-let lastGuideSi = -1;
+// 가로 안내줄 (두 줄): 윗줄은 지금 치는 문장(세로 화면의 글자 상태를 그대로 옮김),
+// 아랫줄은 다음 문장 미리 보기. 문장을 다 치면 아랫줄이 윗줄로 올라온다.
 function renderGuide(pos){
   const g = $('hGuide');
   if(!settings.guide) return;
-  const track = $('hgTrack');
+  const track = $('hgTrack'), next = $('hgNext');
   let si = state.ranges.findIndex(([, b]) => pos < b);
   if(si < 0) si = state.ranges.length - 1;
 
-  const sentenceHtml = (k, extra) => {
-    const [from, to] = state.ranges[k] || [0, 0];
-    let html = '';
-    for(let i = from; i < to; i++){
-      const sp = state.spans[i]; if(!sp) continue;
-      const want = sp.dataset.want ? ` data-want="${esc(sp.dataset.want)}"` : '';
-      const pn = sp.dataset.pn ? ' data-pn="1"' : '';
-      html += `<span class="${sp.className}${extra}"${want}${pn}>${esc(sp.textContent)}</span>`;
-    }
-    return html;
-  };
-  const SEP = '<i class="hg-sep" aria-hidden="true"></i>';
+  const [from, to] = state.ranges[si] || [0, 0];
   let html = '';
-  if(si > 0) html += sentenceHtml(si - 1, ' near') + SEP;                       // 앞 문장 (흐리게)
-  html += sentenceHtml(si, '');                                               // 지금 문장
-  if(si < state.ranges.length - 1) html += SEP + sentenceHtml(si + 1, ' near');  // 다음 문장 미리 보기
+  for(let i = from; i < to; i++){
+    const sp = state.spans[i]; if(!sp) continue;
+    const want = sp.dataset.want ? ` data-want="${esc(sp.dataset.want)}"` : '';
+    const pn = sp.dataset.pn ? ' data-pn="1"' : '';
+    html += `<span class="${sp.className}"${want}${pn}>${esc(sp.textContent)}</span>`;
+  }
   track.innerHTML = html;
 
-  // 커서가 안내줄 가운데쯤(45%)에 오도록 옮긴다. 전체가 짧으면 가운데 정렬.
+  const nr = state.ranges[si + 1];
+  next.textContent = nr ? state.target.slice(nr[0], nr[1]).join('').trimEnd() : '';
+
+  // 윗줄: 커서가 가운데쯤(45%) 오도록, 짧은 문장은 가운데 정렬
   const W = g.clientWidth, T = track.scrollWidth;
   let x;
   if(T <= W * .9) x = (W - T) / 2;
@@ -270,10 +264,10 @@ function renderGuide(pos){
     const cx = cur ? cur.offsetLeft + (cur.classList.contains('caret-after') ? cur.offsetWidth : 0) : 0;
     x = Math.min(W * .06, Math.max(W * .94 - T, W * .45 - cx));
   }
-  // 문장이 바뀌는 순간엔 내용이 통째로 바뀌므로 미끄러지는 효과 없이 바로 제자리로
-  track.style.transition = si !== lastGuideSi ? 'none' : '';
-  lastGuideSi = si;
   track.style.transform = `translateX(${x}px)`;
+  // 아랫줄: 짧으면 가운데, 길면 왼쪽부터 (넘치는 끝은 흐리게 가려짐)
+  const N = next.scrollWidth;
+  next.style.transform = `translateX(${N <= W * .9 ? (W - N) / 2 : W * .06}px)`;
 }
 
 // 커서가 있는 열을 화면 가운데로 가로 스크롤한다.
