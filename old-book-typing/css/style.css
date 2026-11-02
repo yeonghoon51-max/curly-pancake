@@ -180,6 +180,9 @@ button.pill.active{border-color:var(--accent2);color:var(--accent);background:va
 .hg-track span.caret-before{box-shadow:-2px 0 0 var(--accent)}
 .hg-track span.sp:not(.correct):not(.wrong):not(.composing)::before{content:'';position:absolute;left:50%;top:55%;width:2px;height:7px;margin:-3.5px 0 0 -1px;border-radius:1px;background:var(--mark)}
 .hg-track span[data-pn]{font-weight:800}
+/* 앞·뒤 문장: 더 흐리게, 문장 사이엔 짧은 세로 구분선 */
+.hg-track span.near{opacity:.5}
+.hg-sep{display:inline-block;width:1px;height:.9em;margin:0 .7em;vertical-align:-.1em;background:var(--accent2);opacity:.6}
 .type-status{text-align:center;font-size:12.5px;color:var(--muted);margin-top:9px;min-height:1.5em;transition:color .2s}
 .type-status.warn{color:var(--red)}
 .type-status.ok{color:var(--green)}
