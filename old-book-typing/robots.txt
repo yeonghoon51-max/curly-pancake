@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yeonghoon51-max.github.io/curly-pancake/sitemap.xml
