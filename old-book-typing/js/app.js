@@ -127,10 +127,15 @@ function spanHtml(c){
 
 // 각 열은 위에서 아래로 읽고, 다음 열은 오른쪽에서 왼쪽으로 이어진다.
 // 문장 사이 띄어쓰기는 그 문장 마지막 열 끝에 붙어서, 화면 글자 순서와 target 순서가 같다.
+const PER_HALF = 6;          // 반엽(반쪽) 하나에 들어가는 줄 수
+const HANJA_NUM = ['','一','二','三','四','五','六','七','八','九','十'];
+const hanjaNum = n => n <= 10 ? HANJA_NUM[n] : (n >= 20 ? HANJA_NUM[Math.floor(n / 10)] : '') + '十' + HANJA_NUM[n % 10];
+
 function buildColumns(l){
   const sentences = l.modern.map(clean);
   state.target = []; state.ranges = [];
-  let html = '', num = 1, tx = 0;
+  const cols = [];
+  let tx = 0;
   sentences.forEach((text, si) => {
     const withSep = si < sentences.length - 1 ? text + ' ' : text;
     const cps = [...withSep];
@@ -138,15 +143,33 @@ function buildColumns(l){
     state.target.push(...cps);
     for(const chunk of splitVertical(withSep)){
       const chars = [...chunk];
-      html += `<div class="col" data-sentence="${si}" data-from="${tx}" data-len="${[...chunk.trimEnd()].length}">`
-            + `<div class="title">${String(num++).padStart(2,'0')}</div>`
-            + `<div class="text">${chars.map(spanHtml).join('')}</div></div>`;
+      cols.push(`<div class="col" data-sentence="${si}" data-from="${tx}" data-len="${[...chunk.trimEnd()].length}">`
+              + `<div class="text">${chars.map(spanHtml).join('')}</div></div>`);
       tx += chars.length;
     }
   });
+
+  // 책 모양: 열을 반엽(PER_HALF줄)씩 묶고, 반엽 둘 + 판심 = 한 장. 남는 자리는 빈 줄로 채운다.
+  const BLANK = '<div class="col blank"></div>';
+  const halves = [];
+  for(let i = 0; i < cols.length; i += PER_HALF) halves.push(cols.slice(i, i + PER_HALF));
+  const lastHalf = halves[halves.length - 1];
+  while(lastHalf.length < PER_HALF) lastHalf.push(BLANK);
+  if(halves.length % 2) halves.push(Array(PER_HALF).fill(BLANK));
+
+  const bookName = esc([...l.book].slice(0, 8).join(''));
+  let html = '';
+  for(let h = 0; h < halves.length; h += 2){
+    const no = h / 2 + 1;
+    html += `<div class="leaf">`
+          + `<div class="half">${halves[h].join('')}</div>`
+          + `<div class="panshim" title="${no}장"><span class="eomi top"></span><span class="ps-title">${bookName}</span>`
+          + `<span class="ps-no">${hanjaNum(no)}</span><span class="eomi bottom"></span></div>`
+          + `<div class="half">${halves[h + 1].join('')}</div></div>`;
+  }
   columns.innerHTML = html;
-  state.cols  = [...columns.querySelectorAll('.col')];
-  state.spans = [...columns.querySelectorAll('.text span')];
+  state.cols  = [...columns.querySelectorAll('.col:not(.blank)')];
+  state.spans = [...columns.querySelectorAll('.col .text span')];
 }
 
 // 곁글(언해본 또는 한문)을 번역 줄 옆에 붙인다.
