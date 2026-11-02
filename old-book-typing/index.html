@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>옛글자 — 고서 타자연습</title>
+  <meta name="description" content="훈민정음 해례본과 조선의 고서를 세로쓰기 화면으로 읽고 타자하는 역사 타자연습 웹앱" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;800&display=swap');
+    :root{
+      --paper:#f4eedf; --paper2:#fbf7ec; --ink:#28231d; --muted:#756b5d;
+      --line:#d9cdb8; --accent:#7c3f2f; --accent2:#b07a55; --green:#45604a;
+      --shadow:0 18px 50px rgba(65,48,31,.12);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;color:var(--ink);background:
+      radial-gradient(circle at 15% 10%,rgba(176,122,85,.08),transparent 28%),
+      linear-gradient(90deg,#eee5d4,#f8f1e2 40%,#eee5d4);
+      font-family:"Noto Serif KR","Noto Serif CJK KR","Batang","바탕",serif}
+    button{font:inherit}
+    .app{min-height:100vh}
+    header{height:72px;border-bottom:1px solid var(--line);background:rgba(251,247,236,.92);backdrop-filter:blur(12px);
+      display:flex;align-items:center;justify-content:space-between;padding:0 5vw;position:sticky;top:0;z-index:10}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:-.04em}
+    .seal{width:34px;height:34px;border:1px solid #9e4936;color:#9e4936;display:grid;place-items:center;font-size:14px;transform:rotate(-4deg)}
+    nav{display:flex;gap:8px}
+    nav button,.ghost{border:1px solid transparent;background:transparent;padding:9px 14px;color:var(--muted);cursor:pointer;border-radius:8px}
+    nav button.active,nav button:hover{background:#eee4d3;color:var(--ink)}
+    main{max-width:1400px;margin:0 auto;padding:46px 5vw 70px}
+    .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:42px;align-items:end;margin-bottom:38px}
+    .eyebrow{font-size:13px;letter-spacing:.18em;color:var(--accent);font-weight:700;margin-bottom:14px}
+    h1{font-size:clamp(36px,5vw,68px);line-height:1.05;margin:0 0 18px;letter-spacing:-.06em}
+    .hero p{font-size:17px;line-height:1.9;color:var(--muted);margin:0;max-width:690px}
+    .hero-note{border-left:2px solid var(--accent2);padding:10px 0 10px 20px;color:#665b4d;line-height:1.8}
+    .book{background:var(--paper2);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:4px;overflow:hidden}
+    .bookbar{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:#f1e8d8;flex-wrap:wrap;gap:8px}
+    .bookbar strong{font-size:15px}
+    .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .pill{font-size:12px;border:1px solid var(--line);padding:7px 10px;border-radius:999px;background:#faf5ea;color:var(--muted)}
+    .tools button.pill{cursor:pointer;transition:.15s}
+    .tools button.pill.active{border-color:var(--accent2);color:var(--accent);background:#fdf2e4}
+    .bookbody{min-height:590px;display:grid;grid-template-columns:1fr 360px;gap:0;position:relative}
+    .vertical-stage{position:relative;overflow:auto;padding:34px 32px 38px;background:
+      repeating-linear-gradient(90deg,transparent 0,transparent 88px,rgba(125,98,68,.07) 89px,transparent 90px);
+    }
+    .columns{
+      height:510px;
+      display:flex;
+      flex-direction:row-reverse;
+      justify-content:flex-start;
+      align-items:flex-start;
+      gap:42px;
+      overflow-x:auto;
+      overflow-y:hidden;
+      padding:8px 20px;
+      direction:ltr;
+      scroll-behavior:smooth;
+    }
+    .col{
+      height:470px;
+      width:48px;
+      flex:0 0 48px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      position:relative;
+      writing-mode:vertical-rl;
+      text-orientation:mixed;
+    }
+    .col .title{
+      writing-mode:horizontal-tb;
+      font-size:12px;
+      color:var(--accent);
+      letter-spacing:.1em;
+      position:absolute;
+      top:-2px;
+      left:50%;
+      transform:translateX(-50%);
+    }
+    .col .text{
+      writing-mode:vertical-rl;
+      text-orientation:mixed;
+      white-space:pre;
+      font-size:22px;
+      line-height:1.9;
+      letter-spacing:.26em;        /* 글자 사이 틈: 커서 막대가 이 틈 안에 들어가 글자를 가리지 않음 */
+      height:450px;
+      padding-top:24px;
+    }
+    /* 원문(한문) 줄: 번역 줄 바로 앞(오른쪽)에 작게. 번역을 친 만큼 앞에서부터 색이 차오른다. */
+    /* 원문(한문): 번역 줄 바로 오른쪽에 작게 붙는다 (세로쓰기 책의 곁글처럼).
+       번역 줄 길이에 맞춰 고르게 펼쳐지고, 번역을 친 만큼 위에서부터 색이 차오른다. */
+    .col .gloss{
+      position:absolute;
+      top:24px;                       /* .text의 padding-top과 맞춤 */
+      right:-9px;
+      width:14px;
+      font-size:22px;                 /* 높이 계산 기준 = 번역 글자 크기 */
+      height:calc(var(--n) * 1.26em);  /* 번역 글자 수만큼의 길이 */
+      writing-mode:horizontal-tb;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-around;
+      align-items:center;
+      pointer-events:none;
+    }
+    .col .gloss span{font-size:13px;line-height:1;color:#cdbfaa;transition:color .35s ease}
+    .col .gloss span.lit{color:var(--accent)}
+    .col .gloss.eonhae span{font-family:"Noto Serif CJK KR","Source Han Serif K","HCR Batang","함초롬바탕","Noto Sans CJK KR","Malgun Gothic","맑은 고딕","Noto Serif KR",serif}
+    .col .gloss span.gap{height:5px}
+    .col .text span{
+      display:inline;
+      position:relative;
+      color:#b3aa9d;               /* 아직 안 친 글자: 흐린 먹 */
+      transition:color .08s ease;
+    }
+    /* 맞게 친 글자: 진한 먹으로 채워진다 (오타 빨강과 확실히 구분되도록 붉은 계열은 쓰지 않음) */
+    .col .text span.sp{letter-spacing:.2em}
+    .col .text span.correct{color:var(--ink)}
+    /* 오타: 제자리에 '실제로 친 글자'를 빨갛게 + 빨간 밑줄, 옆에 '원래 글자'를 작게 */
+    .col .text span.wrong{
+      color:#c0392b;
+      text-decoration:underline;
+      text-decoration-color:#c0392b;
+      text-decoration-thickness:2px;
+      text-underline-offset:3px;
+    }
+    .col .text span[data-want]::after{
+      content:attr(data-want);
+      position:absolute;
+      right:100%;
+      top:50%;
+      transform:translateY(-50%);
+      margin-right:4px;
+      writing-mode:horizontal-tb;
+      font-size:11px;
+      font-weight:600;
+      line-height:1;
+      color:var(--green);
+      white-space:nowrap;
+    }
+    /* 조합 중인 글자(ㅇ→우→울): 원래 글자 자리에 그대로 보여주고, 확정 전엔 판정하지 않는다 */
+    .col .text span.composing{color:var(--ink)}
+
+    /* 커서: 방금 친 글자 바로 뒤(세로쓰기라 글자 아래) 틈에 얇은 막대.
+       letter-spacing으로 생긴 글자 아래 빈 공간 안에만 그려서 다음 글자를 가리지 않는다. */
+    .col .text span.caret-after{
+      --cc:var(--accent);
+      background-image:linear-gradient(to top, transparent 1.5px, var(--cc) 1.5px, var(--cc) 3.5px, transparent 3.5px);
+      animation:caretBlink 1s step-end infinite;
+    }
+    /* 아직 아무것도 안 쳤을 때: 첫 글자 위 */
+    .col .text span.caret-before{
+      --cc:var(--accent);
+      box-shadow:0 -4px 0 -1px var(--cc);
+      animation:caretBlink 1s step-end infinite;
+    }
+    @property --cc{syntax:'<color>';inherits:true;initial-value:transparent}
+    @keyframes caretBlink{0%,49%{--cc:var(--accent)}50%,100%{--cc:transparent}}
+    .vertical-stage.is-typing .col .text span{animation:none}      /* 치는 동안엔 깜빡이지 않음 */
+    .vertical-stage:not(.focused) .col .text span.caret-after,
+    .vertical-stage:not(.focused) .col .text span.caret-before{animation:none;--cc:rgba(124,63,47,.3)}
+    .side{border-left:1px solid var(--line);padding:24px;background:#f8f1e4}
+    .side h2{font-size:18px;margin:0 0 8px}
+    .side p{font-size:13px;color:var(--muted);line-height:1.7;margin:0 0 18px}
+    .mode{display:grid;grid-template-columns:repeat(3,1fr);background:#eee4d4;border-radius:9px;padding:4px;margin-bottom:18px}
+    .mode button{border:0;background:transparent;padding:9px;cursor:pointer;border-radius:6px;color:var(--muted)}
+    .mode button.active{background:#fffaf0;color:var(--ink);box-shadow:0 2px 8px rgba(60,45,30,.08)}
+    .progress{height:6px;background:#e4d9c7;border-radius:10px;overflow:hidden;margin:9px 0 20px}
+    .progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+    .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}
+    .stat{border:1px solid var(--line);background:#fbf7ee;padding:12px;border-radius:8px}
+    .stat b{display:block;font-size:21px;margin-top:4px}
+    .stat span{font-size:11px;color:var(--muted)}
+    .primary{width:100%;border:0;background:var(--accent);color:white;padding:12px;border-radius:8px;cursor:pointer}
+    .primary:hover{filter:brightness(.94)}
+
+    /* 실제 입력은 화면 밖 보이지 않는 textarea가 받고,
+       사람 눈에 보이는 커서/상태 표시는 세로쓰기 화면 위에 직접 얹는다. */
+    #typing{position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;border:0;padding:0;resize:none;pointer-events:none}
+    .vertical-stage{cursor:text}
+    /* 무대 아래: 지금 치는 문장을 가로로 작게 보여주는 안내줄 + 상태 문구 */
+    .stage-foot{
+      position:absolute;left:0;right:0;bottom:0;padding:30px 20px 12px;pointer-events:none;z-index:5;
+      background:linear-gradient(180deg,rgba(251,247,236,0),var(--paper2) 38%);
+    }
+    .type-status{text-align:center;font-size:12px;color:var(--muted);margin-top:8px}
+    .hguide{
+      position:relative;overflow:hidden;height:2.3em;font-size:17px;
+      border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+      -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
+              mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
+    }
+    .hguide.off{display:none}
+    .hg-track{position:absolute;top:0;left:0;white-space:pre;line-height:2.3em;letter-spacing:.03em;transition:transform .18s ease}
+    .hg-track span{position:relative;color:#b3aa9d}
+    .hg-track span.correct{color:var(--ink)}
+    .hg-track span.composing{color:var(--ink);background:rgba(176,122,85,.16);border-radius:2px}
+    .hg-track span.wrong{color:#c0392b;text-decoration:underline;text-decoration-color:#c0392b;text-decoration-thickness:2px;text-underline-offset:3px}
+    .hg-track span[data-want]::after{
+      content:attr(data-want);position:absolute;left:50%;top:-.25em;transform:translateX(-50%);
+      font-size:10px;line-height:1;color:var(--green);font-weight:600;white-space:nowrap;
+    }
+    .hg-track span.caret-after{box-shadow:2px 0 0 var(--accent)}
+    .hg-track span.caret-before{box-shadow:-2px 0 0 var(--accent)}
+    /* 띄어쓰기 칸을 눈에 보이게: 아직 안 친 띄어쓰기에 옅은 점 */
+    /* 띄어쓰기 자리 표시 (줄 끝 띄어쓰기 포함). 마침표와 헷갈리지 않게 세로에선 짧은 가로 획 */
+    .col .text span.sp:not(.correct):not(.wrong):not(.composing)::before{
+      content:'';position:absolute;left:50%;top:50%;width:9px;height:2px;margin:-1px 0 0 -4.5px;
+      border-radius:1px;background:#c4b298;
+    }
+    .hg-track span.sp:not(.correct):not(.wrong):not(.composing)::before{
+      content:'';position:absolute;left:50%;top:55%;width:2px;height:7px;margin:-3.5px 0 0 -1px;
+      border-radius:1px;background:#c4b298;
+    }
+    /* 문장부호: 세로쓰기에선 글자 귀퉁이에 작게 붙어 안 보이므로, 세워서 한 칸을 차지하고 진하게 */
+    .col .text span[data-pn]{text-orientation:upright;font-weight:800}
+    .col .text span[data-pn]:not(.correct):not(.wrong):not(.composing){color:#9a7660}
+    .hg-track span[data-pn]{font-weight:800}
+    .type-hint{
+      position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+      text-align:center;line-height:1.7;font-size:14px;font-weight:600;color:var(--accent);
+      background:rgba(244,238,223,.62);cursor:pointer;z-index:12;
+    }
+
+    /* ---- 완료 결과창 ---- */
+    .result-overlay{position:fixed;inset:0;background:rgba(37,30,22,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+    .result-card{background:var(--paper2);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:4px;max-width:380px;width:100%;padding:34px 28px;text-align:center}
+    .result-badge{display:inline-block;font-size:12px;letter-spacing:.06em;border:1px solid var(--line);color:var(--muted);padding:7px 16px;border-radius:999px;margin-bottom:16px}
+    .result-badge.top{background:var(--accent);border-color:var(--accent);color:#fff}
+    .result-card h3{margin:0 0 22px;font-size:18px;line-height:1.6}
+    .result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:26px}
+    .result-stats div{border:1px solid var(--line);background:#fbf7ee;border-radius:8px;padding:12px 6px}
+    .result-stats b{display:block;font-size:19px}
+    .result-stats span{font-size:11px;color:var(--muted)}
+    .result-actions{display:flex;gap:10px}
+    .result-actions button{flex:1;padding:11px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+    .result-actions button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+
+    .section-title{margin:62px 0 18px;display:flex;justify-content:space-between;align-items:end}
+    .section-title h2{margin:0;font-size:26px}
+    .section-title span{font-size:13px;color:var(--muted)}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .card{border:1px solid var(--line);background:rgba(251,247,236,.8);padding:22px;border-radius:4px;cursor:pointer;transition:.2s}
+    .card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(65,48,31,.08)}
+    .card .num{font-size:12px;color:var(--accent);letter-spacing:.1em}
+    .card h3{margin:9px 0 7px;font-size:18px}
+    .card p{margin:0;color:var(--muted);font-size:13px;line-height:1.7}
+    footer{padding:28px 5vw;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.8}
+    @media(max-width:900px){
+      .hero{grid-template-columns:1fr}.bookbody{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid var(--line)}
+      .cards{grid-template-columns:1fr}
+    }
+    @media(max-width:560px){
+      header{padding:0 18px}.brand{font-size:14px}nav button{padding:8px 7px;font-size:12px}
+      main{padding:30px 16px}.bookbody{min-height:0}.vertical-stage{padding:22px 12px}
+      .columns{gap:25px;height:450px}.col{height:405px}.col .text{font-size:19px}.col .gloss{font-size:19px}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand"><div class="seal">옛</div><span>옛글자 · 고서 타자연습</span></div>
+  <nav>
+    <button class="active" onclick="setNav(this,'practice')">타자연습</button>
+    <button onclick="setNav(this,'library')">고서목록</button>
+    <button onclick="setNav(this,'about')">소개</button>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div>
+      <div class="eyebrow">OLD BOOK · MODERN TYPING</div>
+      <h1>옛 책을 읽고,<br>오늘의 손으로 쓰다.</h1>
+      <p>훈민정음 해례본의 문장과 조선의 기록을 현대어로 읽으며 타자하는 역사 타자연습입니다. 원문의 세로쓰기 감각은 살리고, 입력은 오늘날의 한글 자판으로 할 수 있게 설계했습니다.</p>
+    </div>
+    <div class="hero-note">첫 번째 수록본<br><strong>훈민정음 해례본 · 어제 서문</strong><br>세종이 새 문자를 만든 뜻을 현대어로 풀어 쓴 연습문입니다.</div>
+  </section>
+
+  <section id="practice" class="book">
+    <div class="bookbar">
+      <strong id="bookTitle">훈민정음 해례본 · 어제 서문</strong>
+      <div class="tools">
+        <span class="pill">세로쓰기</span>
+        <span class="pill">자동 따라가기</span>
+        <span class="pill" id="lessonPill">1 / 3</span>
+        <button class="pill active" id="guideToggle" onclick="toggleGuide()">가로 안내줄 켜짐</button>
+        <button class="pill active" id="soundToggle" onclick="toggleSound()">🔊 효과음 켜짐</button>
+      </div>
+    </div>
+    <div class="bookbody">
+      <div class="vertical-stage" id="verticalStage">
+        <div class="columns" id="columns"></div>
+        <div class="stage-foot">
+          <div class="hguide" id="hGuide"><div class="hg-track" id="hgTrack"></div></div>
+          <div class="type-status" id="typeStatus">흐린 글자 위에 그대로 덮어 쓰세요</div>
+        </div>
+        <div class="type-hint" id="typeHint">✏️ 바로 타자를 치면 시작됩니다<br><small style="font-weight:400;color:var(--muted)">글자 위에 그대로 덮어 쓰듯 입력하세요</small></div>
+      </div>
+      <aside class="side">
+        <div class="mode">
+          <button id="gl-eonhae" class="active" onclick="setGloss('eonhae')">언해본</button>
+          <button id="gl-original" onclick="setGloss('original')">한문</button>
+          <button id="gl-none" onclick="setGloss('none')">번역만</button>
+        </div>
+        <h2>오늘의 문장</h2>
+        <p id="description">우리말이 중국의 글자와 서로 맞지 않아, 백성이 자신의 뜻을 글로 제대로 나타내기 어려웠다.</p>
+        <div class="progress"><i id="bar"></i></div>
+        <div class="statgrid">
+          <div class="stat"><span>분당 타수</span><b id="wpm">0</b></div>
+          <div class="stat"><span>정확도</span><b id="accuracy">100%</b></div>
+          <div class="stat"><span>진행</span><b id="percent">0%</b></div>
+          <div class="stat"><span>오타</span><b id="errors">0</b></div>
+        </div>
+        <button class="primary" onclick="focusTyping()">입력 시작하기</button>
+      </aside>
+      <textarea id="typing" spellcheck="false" aria-label="타자 입력"></textarea>
+    </div>
+  </section>
+
+  <div class="section-title" id="library">
+    <h2>고서 연습장</h2><span>확장 가능한 콘텐츠 구조</span>
+  </div>
+  <div class="cards">
+    <article class="card" onclick="loadLesson(0)"><div class="num">01 · 세종</div><h3>훈민정음 해례본</h3><p>어제 서문과 예의부터 시작해 제자해·초성해·중성해·종성해로 확장합니다.</p></article>
+    <article class="card" onclick="loadLesson(1)"><div class="num">02 · 조선왕조</div><h3>조선왕조실록</h3><p>왕대·연도·기사 단위로 원문과 국역을 나란히 제공하고 타자 코스를 만들 수 있습니다.</p></article>
+    <article class="card" onclick="loadLesson(2)"><div class="num">03 · 문집·의궤</div><h3>조선의 기록들</h3><p>승정원일기, 의궤, 문집 등으로 콘텐츠를 추가할 수 있도록 설계한 확장 영역입니다.</p></article>
+  </div>
+
+  <section id="about" style="margin-top:70px">
+    <div class="section-title"><h2>이 사이트의 방향</h2></div>
+    <div class="card" style="cursor:default">
+      <p style="font-size:15px;line-height:2;margin:0">
+        <strong>읽기 → 보기 → 입력 → 기록</strong>의 순서로 옛 문헌을 경험하게 합니다.
+        원문 이미지를 함께 볼 수 있는 뷰어, 현대어 풀이, 세로쓰기 타자 화면, 정확도·타수 기록을 하나의 학습 흐름으로 묶는 것이 핵심입니다.
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  본 프로토타입의 현대어 문장은 학습용으로 새롭게 풀어쓴 예시입니다. 실제 서비스에서는 국립국어원·국립한글박물관·국사편찬위원회 등 공공기관의 원문/번역 자료와 이용 조건을 확인하여 콘텐츠를 구축하세요.
+</footer>
+</div>
+
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <div class="result-badge" id="resultBadge">급수 판정 중</div>
+    <h3>한 편을 다 옮겨 적었습니다</h3>
+    <div class="result-stats">
+      <div><b id="rTime">00:00</b><span>걸린 시간</span></div>
+      <div><b id="rCpm">0</b><span>분당 타수</span></div>
+      <div><b id="rAcc">100%</b><span>정확도</span></div>
+    </div>
+    <div class="result-actions">
+      <button onclick="retryLesson()">다시 쓰기</button>
+      <button class="primary" onclick="nextLesson()">다음 문헌으로</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const lessons = [
+  {
+    title:'훈민정음 해례본 · 어제 서문',
+    desc:'우리말이 중국의 글자와 서로 맞지 않아, 백성이 자신의 뜻을 글로 제대로 나타내기 어려웠다.',
+    modern:[
+      '우리말이 중국의 글자와 서로 맞지 않아, 백성이 자신의 뜻을 글로 제대로 나타내기 어려웠다.',
+      '그래서 내가 이를 딱하게 여겨 새로 스물여덟 글자를 만들었다.',
+      '사람마다 쉽게 익혀 날마다 편하게 쓰도록 하려는 뜻이다.'
+    ],
+    original:[
+      '國之語音 異乎中國 與文字不相流通 故愚民有所欲言 而終不得伸其情者 多矣',
+      '予爲此憫然 新制二十八字',
+      '欲使人人易習 便於日用耳'
+    ],
+    // 언해본(월인석보 권1 「세종어제훈민정음」). 한자는 빼고 당시 독음만, 방점은 생략.
+    eonhae:[
+      '나랏말ᄊᆞ미 듀ᇰ귁에 달아 문ᄍᆞᆼ와로 서르 ᄉᆞᄆᆞᆺ디 아니ᄒᆞᆯᄊᆡ 이런 젼ᄎᆞ로 어린 ᄇᆡᆨ셔ᇰ이 니르고져 호ᇙ 배 이셔도 ᄆᆞᄎᆞᆷ내 제 ᄠᅳ들 시러 펴디 몯ᄒᆞᇙ 노미 하니라',
+      '내 이ᄅᆞᆯ 윙ᄒᆞ야 어엿비 너겨 새로 스믈여듧 ᄍᆞᆼᄅᆞᆯ ᄆᆡᇰᄀᆞ노니',
+      '사ᄅᆞᆷ마다 ᄒᆡᅇᅧ 수ᄫᅵ 니겨 날로 ᄡᅮ메 뼌ᅙᅡᆫ킈 ᄒᆞ고져 ᄒᆞᇙ ᄯᆞᄅᆞ미니라'
+    ]
+  },
+  {
+    title:'조선왕조실록 · 기사 연습 예시',
+    desc:'왕대와 날짜, 기사 제목, 국역 문장을 기준으로 한 타자연습 코스의 예시입니다.',
+    modern:[
+      '오늘은 왕실과 나라의 일을 기록으로 남긴다.',
+      '이 기록은 당시의 날짜와 사건을 기준으로 차례차례 정리된다.',
+      '원문과 번역문을 함께 살펴보며 문장을 입력해 보자.'
+    ],
+    original:[
+      '今日記王室與國事',
+      '以年月日次第載錄',
+      '原文與國譯相參而習之'
+    ]
+  },
+  {
+    title:'조선의 기록들 · 문집·의궤',
+    desc:'의궤와 문집 등의 형식을 참고한 확장용 샘플입니다.',
+    modern:[
+      '옛 기록에는 행사와 물품, 사람과 절차가 자세히 적혀 있다.',
+      '한 줄의 기록에도 당시의 생활과 제도가 담겨 있다.',
+      '천천히 읽고 정확하게 입력하며 기록의 문맥을 익혀 보자.'
+    ],
+    original:[
+      '古記詳載儀節器物人物',
+      '一行之錄亦見當時制度',
+      '徐讀而正書以習其文'
+    ]
+  }
+];
+
+let lesson=0, glossMode='eonhae', current=0, start=0, errors=0;
+let completed=false, prevWrong=0, soundOn=true, audioCtx=null, composing=false;
+let lineEndSpaces=new Set();
+let sentenceRanges=[];   // 각 문장이 원문(target)에서 차지하는 [from, to) 범위
+const columns=document.getElementById('columns');
+const typing=document.getElementById('typing');
+
+/* ---------------- 한글 자모 분해 (분당타수 계산용) ---------------- */
+const CHO=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const JUNG=['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const JUNG_PARTS={'ㅘ':['ㅗ','ㅏ'],'ㅙ':['ㅗ','ㅐ'],'ㅚ':['ㅗ','ㅣ'],'ㅝ':['ㅜ','ㅓ'],'ㅞ':['ㅜ','ㅔ'],'ㅟ':['ㅜ','ㅣ'],'ㅢ':['ㅡ','ㅣ']};
+const JONG_PARTS={'ㄳ':['ㄱ','ㅅ'],'ㄵ':['ㄴ','ㅈ'],'ㄶ':['ㄴ','ㅎ'],'ㄺ':['ㄹ','ㄱ'],'ㄻ':['ㄹ','ㅁ'],'ㄼ':['ㄹ','ㅂ'],'ㄽ':['ㄹ','ㅅ'],'ㄾ':['ㄹ','ㅌ'],'ㄿ':['ㄹ','ㅍ'],'ㅀ':['ㄹ','ㅎ'],'ㅄ':['ㅂ','ㅅ']};
+
+function decomposeSyllable(ch){
+  if(!ch) return [];
+  const code=ch.codePointAt(0)-0xAC00;
+  if(code<0||code>11171) return [ch];
+  const c=Math.floor(code/588), v=Math.floor((code%588)/28), f=code%28;
+  const out=[CHO[c],JUNG[v]];
+  if(f>0) out.push(JONG[f]);
+  return out;
+}
+function expandKeystroke(j){
+  return JUNG_PARTS[j] || JONG_PARTS[j] || [j];
+}
+function keySeqForChar(ch){
+  const out=[];
+  decomposeSyllable(ch).forEach(j=>out.push(...expandKeystroke(j)));
+  return out;
+}
+function keystrokeCount(str){
+  let n=0;
+  for(const ch of str) n+=keySeqForChar(ch).length;
+  return n;
+}
+
+/* ---------------- 사운드 ---------------- */
+function ensureAudio(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+function beep(freq,dur,type,vol){
+  if(!soundOn) return;
+  try{
+    const ctx=ensureAudio();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type=type||'sine';
+    osc.frequency.value=freq;
+    gain.gain.value=vol||0.04;
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+dur);
+    osc.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+function playClick(){ beep(720,0.028,'square',0.035); }
+function playWrongBuzz(){ beep(170,0.09,'sawtooth',0.05); }
+function playComplete(){
+  beep(523,.12,'sine',.05);
+  setTimeout(()=>beep(659,.12,'sine',.05),110);
+  setTimeout(()=>beep(784,.2,'sine',.06),220);
+}
+function toggleSound(){
+  soundOn=!soundOn;
+  const btn=document.getElementById('soundToggle');
+  btn.textContent=soundOn?'🔊 효과음 켜짐':'🔇 효과음 꺼짐';
+  btn.classList.toggle('active',soundOn);
+}
+
+/* ---------------- 화면 렌더링 ---------------- */
+function setNav(btn,id){
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
+}
+function escapeHtml(ch){
+  return ch.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+}
+// 세로 한 줄(열)에 들어갈 글자 수. 어절(띄어쓰기 단위)을 중간에서 자르지 않는다.
+// 어절 끝의 띄어쓰기는 열 끝에 매달리고, 마침표·쉼표는 어절에 붙어 있어 혼자 한 줄을 차지하지 않는다.
+const COL_MAX=12;
+function splitVertical(text, size=COL_MAX){
+  const words=text.match(/\S+\s*/g) || [];
+  const cols=[];
+  let line='';
+  for(const w of words){
+    const wordLen=[...w.trimEnd()].length;
+    const lineLen=[...line].length;
+    if(line && lineLen + wordLen > size){ cols.push(line); line=''; }
+    if(!line && wordLen > size){                // 한 어절이 한 열보다 길면 어쩔 수 없이 자른다
+      const cs=[...w];
+      while(cs.length > size+1){ cols.push(cs.splice(0,size).join('')); }
+      line=cs.join('');
+      continue;
+    }
+    line+=w;
+  }
+  if(line) cols.push(line);
+  return cols;
+}
+function render(){
+  const l=lessons[lesson];
+  document.getElementById('bookTitle').textContent=l.title;
+  document.getElementById('description').textContent=l.desc;
+  document.getElementById('lessonPill').textContent=(lesson+1)+' / '+lessons.length;
+  columns.innerHTML='';
+  const arr=l.modern;
+  let number=1;
+
+  // 각 열은 위에서 아래로 읽고, 다음 열은 오른쪽에서 왼쪽으로 이동한다.
+  // 문장 사이 띄어쓰기는 그 문장 마지막 줄 끝에 붙어, 화면 글자와 비교 대상(target)의 위치가 맞는다.
+  let txIndex=0;
+  sentenceRanges=[];
+  arr.forEach((text,si)=>{
+    const withSep = si<arr.length-1 ? text+' ' : text;
+    sentenceRanges.push([txIndex, txIndex+[...withSep].length]);
+    splitVertical(withSep).forEach(chunk=>{
+      const c=document.createElement('div');
+      c.className='col tx';
+      c.dataset.sentence=si;
+      c.dataset.from=txIndex;
+      c.dataset.len=[...chunk.trimEnd()].length;
+      c.innerHTML=`<div class="title">${String(number++).padStart(2,'0')}</div>
+                   <div class="text">${[...chunk].map(ch=>`<span>${escapeHtml(ch)}</span>`).join('')}</div>`;
+      columns.appendChild(c);
+      txIndex+=[...chunk].length;
+    });
+  });
+  if(!l[glossMode] && glossMode!=='none') glossMode = l.eonhae ? 'eonhae' : 'original';
+  buildGlosses();
+
+  // 열 끝에 걸린 띄어쓰기는 세로쓰기에선 눈에 안 보이므로, 치지 않고 다음 글자로 넘어가도 되게 표시해 둔다.
+  lineEndSpaces=new Set();
+  let idx=0;
+  columns.querySelectorAll('.col.tx .text').forEach(t=>{
+    const ss=[...t.querySelectorAll('span')];
+    ss.forEach((s,k)=>{
+      s.dataset.char=s.textContent;
+      if(/[.,!?;:]/.test(s.textContent)) s.dataset.pn='1';
+      if(k===ss.length-1 && s.textContent===' '){ lineEndSpaces.add(idx); s.dataset.le='1'; }
+      idx++;
+    });
+  });
+  typing.value=''; typing.readOnly=false;
+  typing.maxLength=lessons[lesson].modern.join(' ').length;
+  current=0; errors=0; start=0; completed=false; prevWrong=0; composing=false;
+  closeResult();
+  hint.innerHTML=HINT_START; hint.style.display='flex';
+  update();
+  requestAnimationFrame(()=>{
+    columns.scrollLeft = columns.scrollWidth;
+    centerCurrentColumn();
+  });
+}
+
+// 옛한글은 자모 여러 개(ᄉ+ᆞ+ᆯ)가 모여 한 글자가 되므로, 글자 단위(grapheme)로 나눠야 깨지지 않는다.
+const graphemeSeg = (window.Intl && Intl.Segmenter) ? new Intl.Segmenter('ko',{granularity:'grapheme'}) : null;
+function graphemes(str){
+  if(graphemeSeg) return [...graphemeSeg.segment(str)].map(x=>x.segment);
+  return str.match(/[\u1100-\u115F\uA960-\uA97F]+[\u1160-\u11A7\uD7B0-\uD7C6]+[\u11A8-\u11FF\uD7CB-\uD7FB]*|[\s\S]/gu) || [];
+}
+
+// 원문(언해본 또는 한문)을 번역 줄 옆에 곁글로 붙인다.
+// 어절이 쪼개지지 않도록, 원문의 각 어절을 '문장 안에서의 위치 비율'이 같은 번역 줄에 붙인다.
+// 언해본은 현대어와 어순이 거의 같아서 실제 뜻이 맞는 구절 옆에 오게 된다.
+function buildGlosses(){
+  columns.querySelectorAll('.gloss').forEach(g=>g.remove());
+  ['eonhae','original','none'].forEach(m=>{
+    const btn=document.getElementById('gl-'+m);
+    btn.classList.toggle('active', m===glossMode);
+    btn.disabled = m!=='none' && !lessons[lesson][m];
+    btn.style.opacity = btn.disabled ? .4 : 1;
+  });
+  const src=lessons[lesson][glossMode];
+  if(!src){ return; }
+  const cols=[...columns.querySelectorAll('.col.tx')];
+  src.forEach((sentence,si)=>{
+    const sc=cols.filter(c=>+c.dataset.sentence===si);
+    if(!sc.length) return;
+    const lens=sc.map(c=>+c.dataset.len);
+    const txTotal=lens.reduce((a,b)=>a+b,0)||1;
+    const bounds=[]; let cum=0;
+    lens.forEach(n=>{ cum+=n; bounds.push(cum/txTotal); });
+
+    const words=sentence.trim().split(/\s+/).map(w=>graphemes(w));
+    const srcTotal=words.reduce((a,w)=>a+w.length,0)||1;
+    const perCol=sc.map(()=>[]);
+    let before=0;
+    words.forEach(w=>{
+      const mid=(before + w.length/2)/srcTotal;
+      before+=w.length;
+      let ci=bounds.findIndex(b=>mid<=b); if(ci<0) ci=sc.length-1;
+      perCol[ci].push(w);
+    });
+    sc.forEach((c,ci)=>{
+      if(!perCol[ci].length) return;
+      const g=document.createElement('div');
+      g.className='gloss '+glossMode;
+      g.style.setProperty('--n', lens[ci]);
+      g.innerHTML=perCol[ci].map(w=>w.map(ch=>`<span>${escapeHtml(ch)}</span>`).join('')).join('<span class="gap"></span>');
+      c.appendChild(g);
+    });
+  });
+}
+
+// 곁글 종류 바꾸기 (언해본 / 한문 / 번역만). 입력 내용은 그대로 두고 보이기만 바꾼다.
+function setGloss(m){
+  if(m!=='none' && !lessons[lesson][m]) return;
+  glossMode=m;
+  buildGlosses();
+  update();
+}
+function loadLesson(i){lesson=i;document.querySelector('.book').scrollIntoView({behavior:'smooth'});render()}
+
+const stage=document.getElementById('verticalStage');
+const hint=document.getElementById('typeHint');
+const HINT_START=hint.innerHTML;
+
+// 메트로타이핑처럼 카운트다운 없이 바로 입력. 타이머는 첫 글자를 칠 때 시작된다.
+function focusTyping(){
+  if(completed) return;
+  hint.style.display='none';
+  typing.focus();
+}
+stage.addEventListener('click', focusTyping);
+
+// 화면을 따로 클릭하지 않아도, 연습 화면이 보이는 상태에서 키를 누르면 바로 입력으로 연결한다.
+function practiceInView(){
+  const r=document.getElementById('practice').getBoundingClientRect();
+  return r.bottom>80 && r.top<window.innerHeight-80;
+}
+// 주의: 입력창 밖에서 눌린 첫 키는 한글 입력기를 거치지 않아 'D'처럼 영문으로 들어간다("Dㅜ말이" 문제).
+// 그래서 그 키는 버리고(preventDefault) 입력창만 켠 뒤, 다시 치도록 안내한다.
+document.addEventListener('keydown',e=>{
+  if(document.activeElement===typing || completed) return;
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(document.getElementById('resultOverlay').style.display==='flex') return;
+  const tag=(document.activeElement && document.activeElement.tagName)||'';
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+  const typable = e.key.length===1 || e.key==='Process' || e.key==='Backspace';
+  if(typable && practiceInView()){
+    e.preventDefault();
+    focusTyping();
+    flashStatus('입력을 다시 켰어요 · 방금 누른 글자부터 다시 쳐 주세요');
+  }
+});
+
+// 연습 영역 안의 버튼(언해본/한문, 효과음 등)을 눌러도 입력이 끊기지 않게 입력창으로 되돌린다.
+document.getElementById('practice').addEventListener('click',e=>{
+  if(completed) return;
+  if(e.target.closest('button') && (typing.value.length || hint.style.display==='none')){
+    typing.focus({preventScroll:true});
+  }
+});
+
+let flashTimer=null;
+function flashStatus(msg){
+  const st=document.getElementById('typeStatus');
+  st.textContent=msg; st.style.color='var(--accent)';
+  clearTimeout(flashTimer);
+  flashTimer=setTimeout(update,1800);
+}
+
+function toggleGuide(){
+  const g=document.getElementById('hGuide');
+  const off=g.classList.toggle('off');
+  const btn=document.getElementById('guideToggle');
+  btn.textContent= off ? '가로 안내줄 꺼짐' : '가로 안내줄 켜짐';
+  btn.classList.toggle('active', !off);
+  update();
+}
+
+typing.addEventListener('focus',()=>{ stage.classList.add('focused'); });
+typing.addEventListener('blur',()=>{
+  stage.classList.remove('focused');
+  if(!completed && typing.value.length){
+    hint.innerHTML='⏸ 잠시 멈춤<br><small style="font-weight:400;color:var(--muted)">클릭하거나 아무 키나 누르면 이어서 입력합니다</small>';
+    hint.style.display='flex';
+  }
+});
+
+// 치는 동안에는 커서를 깜빡이지 않고, 손을 멈추면 다시 깜빡인다.
+let typingPauseTimer=null;
+function markTyping(){
+  stage.classList.add('is-typing');
+  clearTimeout(typingPauseTimer);
+  typingPauseTimer=setTimeout(()=>stage.classList.remove('is-typing'),600);
+}
+
+function centerCurrentColumn(){
+  const cur=document.querySelector('.col .text span.caret-after, .col .text span.caret-before');
+  if(!cur) return;
+
+  const column=cur.closest('.col');
+  const viewport=document.querySelector('.columns');
+  if(!column || !viewport) return;
+
+  const columnRect=column.getBoundingClientRect();
+  const viewportRect=viewport.getBoundingClientRect();
+
+  // 현재 세로 열의 중앙과 화면 중앙의 차이만큼 가로 스크롤한다.
+  const delta=(columnRect.left + columnRect.width/2)
+             -(viewportRect.left + viewportRect.width/2);
+
+  if(Math.abs(delta)>2){
+    viewport.scrollBy({ left:delta, behavior:'smooth' });
+  }
+}
+
+/* ---------------- 결과창 ---------------- */
+function getGrade(cpm,acc){
+  if(acc>=96 && cpm>=340) return {label:'1급 · 명필', top:true};
+  if(acc>=92 && cpm>=240) return {label:'2급 · 달필', top:true};
+  if(acc>=85 && cpm>=140) return {label:'3급 · 정자체', top:false};
+  return {label:'연습생 · 초심자', top:false};
+}
+function showResult(cpm,acc,elapsedSec){
+  const g=getGrade(cpm,acc);
+  const badge=document.getElementById('resultBadge');
+  badge.textContent=g.label;
+  badge.classList.toggle('top',g.top);
+  document.getElementById('rCpm').textContent=cpm;
+  document.getElementById('rAcc').textContent=acc+'%';
+  const mm=String(Math.floor(elapsedSec/60)).padStart(2,'0');
+  const ss=String(elapsedSec%60).padStart(2,'0');
+  document.getElementById('rTime').textContent=`${mm}:${ss}`;
+  document.getElementById('resultOverlay').style.display='flex';
+  playComplete();
+}
+function closeResult(){ document.getElementById('resultOverlay').style.display='none'; }
+function retryLesson(){ closeResult(); render(); }
+function nextLesson(){ closeResult(); loadLesson((lesson+1)%lessons.length); }
+
+/* ---------------- 입력 처리 ---------------- */
+// 화면에 보여줄 때 띄어쓰기는 눈에 보이는 기호로 바꾼다.
+function showChar(c){ return c===' ' ? '␣' : c; }
+const PUNCT_NAME={' ':'띄어쓰기', ',':'쉼표(,)', '.':'마침표(.)', '?':'물음표(?)', '!':'느낌표(!)'};
+function charLabel(c){ return PUNCT_NAME[c] || `'${c}'`; }
+// 을/를: 이름으로 부르는 문장부호는 모두 받침 없음, 한글은 받침 유무로, 그 밖은 을(를)
+function eulReul(c){
+  if(PUNCT_NAME[c]) return '를';
+  const code=(c||'').charCodeAt(0)-0xAC00;
+  if(code>=0 && code<=11171) return code%28 ? '을' : '를';
+  return '을(를)';
+}
+
+// 번역을 친 분량만큼 그 줄 옆 원문을 위에서부터 색칠한다.
+function fillOriginal(pos){
+  columns.querySelectorAll('.col.tx').forEach(c=>{
+    const g=c.querySelector('.gloss'); if(!g) return;
+    const from=+c.dataset.from, len=+c.dataset.len;
+    const done=Math.max(0, Math.min(len, pos-from));
+    const sp=[...g.querySelectorAll('span:not(.gap)')];
+    const lit = done>=len ? sp.length : Math.floor(sp.length*done/len);
+    sp.forEach((x,i)=>x.classList.toggle('lit', i<lit));
+  });
+}
+
+// 지금 치는 문장을 아래 안내줄에 가로로 보여준다. 세로 화면의 글자 상태(맞음/오타/조합 중/커서)를 그대로 옮겨 온다.
+function renderGuide(pos, spans){
+  const g=document.getElementById('hGuide');
+  if(g.classList.contains('off')) return;
+  const track=document.getElementById('hgTrack');
+  let si=sentenceRanges.findIndex(([a,b])=>pos<b);
+  if(si<0) si=sentenceRanges.length-1;
+  // 문장 끝 띄어쓰기 바로 앞까지 쳤으면 아직 그 문장을 보여준다
+  const [from,to]=sentenceRanges[si]||[0,0];
+  let html='';
+  for(let i=from;i<to;i++){
+    const sp=spans[i]; if(!sp) continue;
+    const cls=sp.className;
+    const want=sp.dataset.want ? ` data-want="${escapeHtml(sp.dataset.want)}"` : '';
+    const pn=sp.dataset.pn ? ' data-pn="1"' : '';
+    html+=`<span class="${cls}"${want}${pn}>${escapeHtml(sp.textContent)}</span>`;
+  }
+  track.innerHTML=html;
+  // 커서가 안내줄 가운데쯤 오도록 가로 이동 (문장이 짧으면 가운데 정렬)
+  const W=g.clientWidth, T=track.scrollWidth;
+  let x;
+  if(T<=W*0.9){ x=(W-T)/2; }
+  else{
+    const cur=track.querySelector('.caret-after, .caret-before');
+    const cx=cur ? cur.offsetLeft + (cur.classList.contains('caret-after')?cur.offsetWidth:0) : 0;
+    x=Math.min(W*0.06, Math.max(W*0.94-T, W*0.45-cx));
+  }
+  track.style.transform=`translateX(${x}px)`;
+}
+
+function update(){
+  const target=lessons[lesson].modern.join(' ');
+  const chars=[...typing.value];
+  const spans=[...document.querySelectorAll('.col.tx .text span')];
+  spans.forEach(s=>{
+    s.className = s.dataset.char===' ' ? 'sp' : '';
+    s.textContent = s.dataset.char;
+    delete s.dataset.want;
+  });
+
+  // 마지막 글자가 아직 조합 중이면 확정된 글자로 보지 않는다 (메트로타이핑처럼 확정될 때 판정).
+  const committedLen = composing ? Math.max(0, chars.length-1) : chars.length;
+
+  // 친 글자(k) → 원문 위치(t) 대응표. (띄어쓰기는 줄 끝이어도 원래대로 쳐야 한다)
+  const map=[];
+  let t=0;
+  for(let k=0;k<chars.length;k++){
+    map[k]=t++;
+  }
+  const pos = chars.length ? Math.min(map[chars.length-1]+1, target.length) : 0;   // 원문 기준 진행 위치
+
+  let correct=0, wrong=0, lastWrong=null;
+  for(let k=0;k<committedLen;k++){
+    const ch=chars[k], ti=map[k], span=spans[ti];
+    if(ch===target[ti]){
+      correct++;
+      if(span) span.classList.add('correct');
+    }else{
+      wrong++;
+      lastWrong={typed:ch, want:target[ti]};
+      if(span){
+        span.classList.add('wrong');
+        span.textContent=showChar(ch);                  // 실제로 친 글자 (빨강 + 밑줄)
+        span.dataset.want=showChar(target[ti] ?? '');   // 원래 글자 (옆에 작게)
+      }
+    }
+  }
+
+  // 조합 중인 글자는 원래 글자 자리에 그대로 겹쳐 보여준다 (ㅇ → 우 → 울 → 우|리)
+  if(composing && chars.length){
+    const span=spans[map[chars.length-1]];
+    if(span){ span.classList.add('composing'); span.textContent=chars[chars.length-1]; }
+  }
+
+  // 커서 막대: 마지막으로 친(또는 조합 중인) 글자 바로 뒤. 아무것도 안 쳤으면 첫 글자 앞.
+  if(chars.length && spans[map[chars.length-1]]) spans[map[chars.length-1]].classList.add('caret-after');
+  else if(!chars.length && spans[0]) spans[0].classList.add('caret-before');
+
+  fillOriginal(pos);
+  renderGuide(pos, spans);
+  requestAnimationFrame(centerCurrentColumn);
+
+  errors=wrong;
+  const v=typing.value;
+  const pct=Math.min(100,Math.round(pos/target.length*100));
+  document.getElementById('bar').style.width=pct+'%';
+  document.getElementById('percent').textContent=pct+'%';
+  document.getElementById('errors').textContent=errors;
+  const accPct=committedLen?Math.max(0,Math.round(correct/committedLen*100)):100;
+  document.getElementById('accuracy').textContent=accPct+'%';
+
+  // 실제 한글 타자 프로그램처럼 '자모 입력 수' 기준으로 분당타수를 계산한다.
+  const jamoTyped=keystrokeCount(v);
+  const mins=start?(Date.now()-start)/60000:0;
+  const cpm=mins?Math.round(jamoTyped/mins):0;
+  document.getElementById('wpm').textContent=cpm;
+
+  const status=document.getElementById('typeStatus');
+  const posInfo=`${pos} / ${target.length}`;
+  const latin = chars.slice(0,committedLen).some(c=>/[A-Za-z]/.test(c));
+  if(latin){
+    status.textContent='영문이 입력됐어요 · 한/영 키로 한글 입력을 확인하고, 백스페이스로 지운 뒤 다시 쳐 주세요';
+    status.style.color='#c0392b';
+  }else if(lastWrong){
+    status.textContent=`${charLabel(lastWrong.want)} 자리에 ${charLabel(lastWrong.typed)}${eulReul(lastWrong.typed)} 입력했어요 · 백스페이스로 고치세요 (오타 ${wrong}개)`;
+    status.style.color='#c0392b';
+  }else if(pos===target.length){
+    status.textContent='문장 입력 완료 · 정확도 '+accPct+'%';
+    status.style.color='var(--green)';
+  }else if(start){
+    status.textContent=`${posInfo} 입력 중`;
+    status.style.color='var(--muted)';
+  }else{
+    status.textContent='흐린 글자 위에 그대로 덮어 쓰세요 · 띄어쓰기 자리는 짧은 가로 획(–)으로 표시됩니다';
+    status.style.color='var(--muted)';
+  }
+
+  if(wrong>prevWrong) playWrongBuzz();
+  prevWrong=wrong;
+
+  const lastOk = !composing || chars[chars.length-1]===target[target.length-1];
+  if(pos===target.length && lastOk && !completed){
+    completed=true;
+    typing.readOnly=true;
+    const elapsedSec=start?Math.round((Date.now()-start)/1000):0;
+    setTimeout(()=>showResult(cpm,accPct,elapsedSec),500);
+  }
+}
+
+// 한글 IME 조합 상태를 추적한다 (ㅇ → 우 → 울 처럼 조합 중인 글자는 오타로 치지 않기 위해)
+typing.addEventListener('compositionstart',()=>{ composing=true; });
+typing.addEventListener('compositionend',()=>{ composing=false; update(); });
+typing.addEventListener('input',()=>{ if(!start) start=Date.now(); hint.style.display='none'; markTyping(); update(); });
+const NAV_KEYS=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown','Tab','Enter'];
+typing.addEventListener('keydown',e=>{
+  // 보이지 않는 입력창이라 커서가 중간으로 옮겨지면 화면과 어긋나므로 이동 키는 막는다.
+  if(NAV_KEYS.includes(e.key)){ e.preventDefault(); return; }
+  if(completed) return;
+  playClick();
+});
+typing.addEventListener('focus',()=>{ const n=typing.value.length; typing.setSelectionRange(n,n); });
+
+render();
+// 처음부터 입력창이 켜져 있어야 첫 키도 한글 입력기를 거친다.
+typing.focus({preventScroll:true});
+</script>
+</body>
+</html>
