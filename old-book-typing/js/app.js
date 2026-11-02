@@ -238,29 +238,46 @@ function fillGloss(pos){
   }
 }
 
-// 가로 안내줄 (두 줄): 윗줄은 지금 치는 문장(세로 화면의 글자 상태를 그대로 옮김),
-// 아랫줄은 다음 문장 미리 보기. 문장을 다 치면 아랫줄이 윗줄로 올라온다.
+// 가로 안내줄. 화면 높이에 따라 두 가지 모양 (기준은 style.css 의 @media 와 같음)
+//  · 데스크탑(창 높이 900px 이상): 두 줄 — 윗줄은 지금 문장, 아랫줄은 다음 문장 미리 보기
+//  · 노트북(900px 미만): 한 줄 — 지금 문장 앞뒤로 앞 문장과 다음 문장을 흐리게 이어 붙임
+// 지금 문장의 글자 상태(맞음/오타/조합 중/커서)는 세로 화면에서 그대로 옮겨 온다.
+const tallScreen = matchMedia('(min-height: 900px)');
+let lastGuideSi = -1;
 function renderGuide(pos){
   const g = $('hGuide');
   if(!settings.guide) return;
   const track = $('hgTrack'), next = $('hgNext');
   let si = state.ranges.findIndex(([, b]) => pos < b);
   if(si < 0) si = state.ranges.length - 1;
+  const twoLines = tallScreen.matches;
 
-  const [from, to] = state.ranges[si] || [0, 0];
-  let html = '';
-  for(let i = from; i < to; i++){
-    const sp = state.spans[i]; if(!sp) continue;
-    const want = sp.dataset.want ? ` data-want="${esc(sp.dataset.want)}"` : '';
-    const pn = sp.dataset.pn ? ' data-pn="1"' : '';
-    html += `<span class="${sp.className}"${want}${pn}>${esc(sp.textContent)}</span>`;
+  const sentenceHtml = (k, extra) => {
+    const [from, to] = state.ranges[k] || [0, 0];
+    let html = '';
+    for(let i = from; i < to; i++){
+      const sp = state.spans[i]; if(!sp) continue;
+      const want = sp.dataset.want ? ` data-want="${esc(sp.dataset.want)}"` : '';
+      const pn = sp.dataset.pn ? ' data-pn="1"' : '';
+      html += `<span class="${sp.className}${extra}"${want}${pn}>${esc(sp.textContent)}</span>`;
+    }
+    return html;
+  };
+  const hasNext = si < state.ranges.length - 1;
+
+  if(twoLines){
+    track.innerHTML = sentenceHtml(si, '');
+    const nr = state.ranges[si + 1];
+    next.textContent = hasNext ? state.target.slice(nr[0], nr[1]).join('').trimEnd() : '';
+  }else{
+    const SEP = '<i class="hg-sep" aria-hidden="true"></i>';
+    track.innerHTML = (si > 0 ? sentenceHtml(si - 1, ' near') + SEP : '')
+                    + sentenceHtml(si, '')
+                    + (hasNext ? SEP + sentenceHtml(si + 1, ' near') : '');
+    next.textContent = '';
   }
-  track.innerHTML = html;
 
-  const nr = state.ranges[si + 1];
-  next.textContent = nr ? state.target.slice(nr[0], nr[1]).join('').trimEnd() : '';
-
-  // 윗줄: 커서가 가운데쯤(45%) 오도록, 짧은 문장은 가운데 정렬
+  // 윗줄: 커서가 가운데쯤(45%) 오도록, 전체가 짧으면 가운데 정렬
   const W = g.clientWidth, T = track.scrollWidth;
   let x;
   if(T <= W * .9) x = (W - T) / 2;
@@ -269,11 +286,17 @@ function renderGuide(pos){
     const cx = cur ? cur.offsetLeft + (cur.classList.contains('caret-after') ? cur.offsetWidth : 0) : 0;
     x = Math.min(W * .06, Math.max(W * .94 - T, W * .45 - cx));
   }
+  // 한 줄 모양에서 문장이 바뀌는 순간엔 내용이 통째로 바뀌므로 미끄러짐 없이 바로 제자리로
+  track.style.transition = (!twoLines && si !== lastGuideSi) ? 'none' : '';
+  lastGuideSi = si;
   track.style.transform = `translateX(${x}px)`;
-  // 아랫줄: 짧으면 가운데, 길면 왼쪽부터 (넘치는 끝은 흐리게 가려짐)
-  const N = next.scrollWidth;
-  next.style.transform = `translateX(${N <= W * .9 ? (W - N) / 2 : W * .06}px)`;
+  // 아랫줄: 짧으면 가운데, 길면 왼쪽부터
+  if(twoLines){
+    const N = next.scrollWidth;
+    next.style.transform = `translateX(${N <= W * .9 ? (W - N) / 2 : W * .06}px)`;
+  }
 }
+tallScreen.addEventListener?.('change', () => update());
 
 // 커서가 있는 열을 화면 가운데로 가로 스크롤한다.
 function centerCurrentColumn(smooth = true){

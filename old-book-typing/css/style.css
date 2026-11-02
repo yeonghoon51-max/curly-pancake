@@ -168,7 +168,7 @@ button.pill.active{border-color:var(--accent2);color:var(--accent);background:va
 
 /* ---------- 5. 가로 안내줄 ---------- */
 .stage-foot{margin-top:8px}
-.hguide{position:relative;overflow:hidden;height:calc(2.3em + 1.9em);font-size:17px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+.hguide{position:relative;overflow:hidden;height:2.3em;font-size:17px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
 .hguide.off{display:none}
 .hg-track{position:absolute;top:0;left:0;white-space:pre;line-height:2.3em;letter-spacing:.03em;transition:transform .18s ease}
@@ -180,9 +180,16 @@ button.pill.active{border-color:var(--accent2);color:var(--accent);background:va
 .hg-track span.caret-before{box-shadow:-2px 0 0 var(--accent)}
 .hg-track span.sp:not(.correct):not(.wrong):not(.composing)::before{content:'';position:absolute;left:50%;top:55%;width:2px;height:7px;margin:-3.5px 0 0 -1px;border-radius:1px;background:var(--mark)}
 .hg-track span[data-pn]{font-weight:800}
-/* 아랫줄: 다음 문장 미리 보기 (작고 흐리게) */
-.hg-next{position:absolute;top:2.3em;left:0;white-space:pre;line-height:1.9em;font-size:.88em;letter-spacing:.03em;color:var(--faint);opacity:.75}
-.hg-next:empty{display:none}
+/* 노트북(한 줄): 앞·다음 문장은 흐리게, 문장 사이엔 짧은 세로 구분선 */
+.hg-track span.near{opacity:.5}
+.hg-sep{display:inline-block;width:1px;height:.9em;margin:0 .7em;vertical-align:-.1em;background:var(--accent2);opacity:.6}
+/* 데스크탑(두 줄): 아랫줄에 다음 문장 미리 보기 (작고 흐리게) */
+.hg-next{display:none;position:absolute;top:2.3em;left:0;white-space:pre;line-height:1.9em;font-size:.88em;letter-spacing:.03em;color:var(--faint);opacity:.75}
+@media (min-height:900px){
+  .hguide{height:calc(2.3em + 1.9em)}
+  .hg-next{display:block}
+  .hg-next:empty{display:none}
+}
 .type-status{text-align:center;font-size:12.5px;color:var(--muted);margin-top:9px;min-height:1.5em;transition:color .2s}
 .type-status.warn{color:var(--red)}
 .type-status.ok{color:var(--green)}
@@ -202,7 +209,8 @@ button.pill.active{border-color:var(--accent2);color:var(--accent);background:va
 .book.focus .bookbody{flex:1;min-height:0;grid-template-columns:1fr}
 .book.focus .side,.book.focus #sizeSeg{display:none}
 .book.focus .vertical-stage{justify-content:center;padding:12px 3vw 14px}
-.book.focus .columns{--f:clamp(18px, calc((100vh - 345px) / 16.4), 44px)}
+.book.focus .columns{--f:clamp(18px, calc((100vh - 300px) / 16.4), 44px)}
+@media (min-height:900px){ .book.focus .columns{--f:clamp(18px, calc((100vh - 345px) / 16.4), 44px)} }
 /* 장이 화면보다 좁으면 가운데로. auto 여백은 넘칠 때 0이 되어 스크롤이 망가지지 않는다 */
 .book.focus .leaf:first-child{margin-right:auto}
 .book.focus .leaf:last-child{margin-left:auto}
