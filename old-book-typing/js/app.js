@@ -61,6 +61,7 @@ const state = {
   misses: {},          // 원래 글자별 틀린 횟수
   prevWrong: 0,
   samples: [],         // 결과 그래프용 [{t:초, cpm}]
+  paintLen: 0,         // 직전에 화면에 칠한 글자 수 (바뀐 칸만 고치기 위해)
   live: { pos:0, correct:0, committed:0, wrong:0 }
 };
 
@@ -185,7 +186,8 @@ function buildGlosses(){
     const m = btn.dataset.gloss;
     btn.classList.toggle('active', m === state.gloss);
     btn.disabled = !has(m);
-    if(m === 'eonhae') btn.textContent = (l.labels && l.labels.eonhae) || '언해본';
+    if(m === 'eonhae')   btn.textContent = (l.labels && l.labels.eonhae)   || '언해본';
+    if(m === 'original') btn.textContent = (l.labels && l.labels.original) || '한문';
   });
 
   columns.querySelectorAll('.gloss').forEach(g => g.remove());
@@ -217,6 +219,7 @@ function buildGlosses(){
       g.style.setProperty('--n', lens[ci]);
       g.innerHTML = perCol[ci].map(w => w.map(ch => `<span>${esc(ch)}</span>`).join('')).join('<span class="gap"></span>');
       c.appendChild(g);
+      g._sp = [...g.querySelectorAll('span:not(.gap)')]; g._lit = 0;
     });
   });
 }
@@ -227,29 +230,54 @@ function fillGloss(pos){
     const g = c.querySelector('.gloss'); if(!g) continue;
     const from = +c.dataset.from, len = +c.dataset.len;
     const done = Math.max(0, Math.min(len, pos - from));
-    const sp = g.querySelectorAll('span:not(.gap)');
+    const sp = g._sp;
     const lit = done >= len ? sp.length : Math.floor(sp.length * done / len);
+    if(lit === g._lit) continue;                    // 바뀐 열만 고친다
     sp.forEach((x, i) => x.classList.toggle('lit', i < lit));
+    g._lit = lit;
   }
 }
 
-// 지금 치는 문장을 아래 안내줄에 가로로 보여준다 (세로 화면의 글자 상태를 그대로 옮김).
+// 가로 안내줄. 화면 높이에 따라 두 가지 모양 (기준은 style.css 의 @media 와 같음)
+//  · 데스크탑(창 높이 900px 이상): 두 줄 — 윗줄은 지금 문장, 아랫줄은 다음 문장 미리 보기
+//  · 노트북(900px 미만): 한 줄 — 지금 문장 앞뒤로 앞 문장과 다음 문장을 흐리게 이어 붙임
+// 지금 문장의 글자 상태(맞음/오타/조합 중/커서)는 세로 화면에서 그대로 옮겨 온다.
+const tallScreen = matchMedia('(min-height: 900px)');
+let lastGuideSi = -1;
 function renderGuide(pos){
   const g = $('hGuide');
   if(!settings.guide) return;
-  const track = $('hgTrack');
+  const track = $('hgTrack'), next = $('hgNext');
   let si = state.ranges.findIndex(([, b]) => pos < b);
   if(si < 0) si = state.ranges.length - 1;
-  const [from, to] = state.ranges[si] || [0, 0];
-  let html = '';
-  for(let i = from; i < to; i++){
-    const sp = state.spans[i]; if(!sp) continue;
-    const want = sp.dataset.want ? ` data-want="${esc(sp.dataset.want)}"` : '';
-    const pn = sp.dataset.pn ? ' data-pn="1"' : '';
-    html += `<span class="${sp.className}"${want}${pn}>${esc(sp.textContent)}</span>`;
+  const twoLines = tallScreen.matches;
+
+  const sentenceHtml = (k, extra) => {
+    const [from, to] = state.ranges[k] || [0, 0];
+    let html = '';
+    for(let i = from; i < to; i++){
+      const sp = state.spans[i]; if(!sp) continue;
+      const want = sp.dataset.want ? ` data-want="${esc(sp.dataset.want)}"` : '';
+      const pn = sp.dataset.pn ? ' data-pn="1"' : '';
+      html += `<span class="${sp.className}${extra}"${want}${pn}>${esc(sp.textContent)}</span>`;
+    }
+    return html;
+  };
+  const hasNext = si < state.ranges.length - 1;
+
+  if(twoLines){
+    track.innerHTML = sentenceHtml(si, '');
+    const nr = state.ranges[si + 1];
+    next.textContent = hasNext ? state.target.slice(nr[0], nr[1]).join('').trimEnd() : '';
+  }else{
+    const SEP = '<i class="hg-sep" aria-hidden="true"></i>';
+    track.innerHTML = (si > 0 ? sentenceHtml(si - 1, ' near') + SEP : '')
+                    + sentenceHtml(si, '')
+                    + (hasNext ? SEP + sentenceHtml(si + 1, ' near') : '');
+    next.textContent = '';
   }
-  track.innerHTML = html;
-  // 커서가 안내줄 가운데쯤 오도록 옮긴다 (짧은 문장은 가운데 정렬)
+
+  // 윗줄: 커서가 가운데쯤(45%) 오도록, 전체가 짧으면 가운데 정렬
   const W = g.clientWidth, T = track.scrollWidth;
   let x;
   if(T <= W * .9) x = (W - T) / 2;
@@ -258,8 +286,17 @@ function renderGuide(pos){
     const cx = cur ? cur.offsetLeft + (cur.classList.contains('caret-after') ? cur.offsetWidth : 0) : 0;
     x = Math.min(W * .06, Math.max(W * .94 - T, W * .45 - cx));
   }
+  // 한 줄 모양에서 문장이 바뀌는 순간엔 내용이 통째로 바뀌므로 미끄러짐 없이 바로 제자리로
+  track.style.transition = (!twoLines && si !== lastGuideSi) ? 'none' : '';
+  lastGuideSi = si;
   track.style.transform = `translateX(${x}px)`;
+  // 아랫줄: 짧으면 가운데, 길면 왼쪽부터
+  if(twoLines){
+    const N = next.scrollWidth;
+    next.style.transform = `translateX(${N <= W * .9 ? (W - N) / 2 : W * .06}px)`;
+  }
 }
+tallScreen.addEventListener?.('change', () => update());
 
 // 커서가 있는 열을 화면 가운데로 가로 스크롤한다.
 function centerCurrentColumn(smooth = true){
@@ -289,7 +326,7 @@ function render(){
 
   Object.assign(state, {
     composing:false, completed:false, clockMs:0, runSince:0,
-    judged:0, mistakes:0, misses:{}, prevWrong:0, samples:[]
+    judged:0, mistakes:0, misses:{}, prevWrong:0, samples:[], paintLen:0
   });
   typing.value = ''; typing.readOnly = false;
   typing.maxLength = state.target.join('').length;
@@ -343,12 +380,6 @@ function update(){
   const typed = [...typing.value];
   const spans = state.spans;
 
-  for(const s of spans){
-    s.className = s.dataset.c === ' ' ? 'sp' : '';
-    s.textContent = s.dataset.c;
-    delete s.dataset.want;
-  }
-
   // 마지막 글자가 아직 조합 중이면 확정된 글자로 보지 않는다 (확정될 때 판정).
   const committed = state.composing ? Math.max(0, typed.length - 1) : typed.length;
   const pos = Math.min(typed.length, T.length);
@@ -365,32 +396,37 @@ function update(){
 
   let correct = 0, wrong = 0, lastWrong = null, latin = false;
   for(let k = 0; k < committed; k++){
-    const span = spans[k];
-    if(typed[k] === T[k]){
-      correct++;
-      span && span.classList.add('correct');
-    }else{
+    if(typed[k] === T[k]) correct++;
+    else{
       wrong++;
       lastWrong = { typed: typed[k], want: T[k] };
       if(isLatin(typed[k]) && !isLatin(T[k])) latin = true;
-      if(span){
-        span.classList.add('wrong');
-        span.textContent = showChar(typed[k]);          // 실제로 친 글자 (빨강 + 밑줄)
-        span.dataset.want = showChar(T[k] ?? '');        // 원래 글자 (옆에 작게)
-      }
     }
   }
 
-  // 조합 중인 글자는 원래 글자 자리에 그대로 겹쳐 보여준다 (ㅇ → 우 → 울 → 우|리)
-  if(state.composing && typed.length && spans[typed.length - 1]){
-    const span = spans[typed.length - 1];
-    span.classList.add('composing');
-    span.textContent = typed[typed.length - 1];
+  // 화면 글자 칠하기. 긴 글에서도 빠르도록, 바뀔 수 있는 앞부분만 보고 실제로 달라진 칸만 고친다.
+  //  · 맞음: 진한 먹 / 오타: 친 글자를 빨갛게 + 원래 글자를 옆에 작게
+  //  · 조합 중(ㅇ → 우 → 울): 원래 글자 자리에 그대로 겹쳐 보여 줌
+  //  · 커서: 마지막으로 친 글자 뒤, 아무것도 안 쳤으면 첫 글자 앞
+  const lim = Math.min(spans.length, Math.max(state.paintLen, typed.length) + 1);
+  for(let k = 0; k < lim; k++){
+    const sp = spans[k], c = sp.dataset.c;
+    let cls = c === ' ' ? 'sp' : '', text = c, want = null;
+    if(k < committed){
+      if(typed[k] === T[k]) cls += ' correct';
+      else{ cls += ' wrong'; text = showChar(typed[k]); want = showChar(T[k] ?? ''); }
+    }else if(state.composing && k === typed.length - 1){
+      cls += ' composing'; text = typed[k];
+    }
+    if(k === typed.length - 1) cls += ' caret-after';
+    else if(!typed.length && k === 0) cls += ' caret-before';
+    cls = cls.trim();
+    if(sp.className !== cls) sp.className = cls;
+    if(sp.textContent !== text) sp.textContent = text;
+    if(want === null){ if('want' in sp.dataset) delete sp.dataset.want; }
+    else if(sp.dataset.want !== want) sp.dataset.want = want;
   }
-
-  // 커서: 마지막으로 친 글자 바로 뒤, 아무것도 안 쳤으면 첫 글자 앞
-  if(typed.length && spans[typed.length - 1]) spans[typed.length - 1].classList.add('caret-after');
-  else if(!typed.length && spans[0]) spans[0].classList.add('caret-before');
+  state.paintLen = typed.length;
 
   state.live = { pos, correct, committed, wrong };
   fillGloss(pos);
@@ -584,7 +620,7 @@ function renderCards(){
     const prog = store.data.progress[l.id];
     if(prog && prog.value) tags.push(`이어 하기 ${Math.round([...prog.value].length / [...l.modern.join(' ')].length * 100)}%`);
     if(l.eonhae)   tags.push((l.labels && l.labels.eonhae) || '언해본');
-    if(l.original) tags.push('한문');
+    if(l.original) tags.push((l.labels && l.labels.original) || '한문');
     return `<article class="card${i === state.idx ? ' current' : ''}" role="button" tabindex="0" data-i="${i}">
         <div class="num">${String(i + 1).padStart(2,'0')} · ${esc(l.era || '')}</div>
         <h3>${esc(l.book)}</h3>${l.title ? `<div class="sub">${esc(l.title)}</div>` : ''}
