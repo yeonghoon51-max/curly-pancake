@@ -3,8 +3,38 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>옛글자 — 고서 타자연습</title>
-  <meta name="description" content="훈민정음과 조선의 고서를 세로쓰기 화면으로 읽고 타자하는 역사 타자연습 웹앱" />
+  <title>옛글자 — 훈민정음·고서 세로쓰기 타자연습</title>
+  <meta name="description" content="훈민정음 서문, 용비어천가, 세종실록을 옛 책처럼 세로쓰기 화면에서 따라 치는 무료 한글 타자연습. 언해본·한문 원문을 곁글로 보며 타수와 정확도를 기록합니다." />
+  <meta name="keywords" content="타자연습, 한글 타자연습, 훈민정음, 세로쓰기, 고서, 용비어천가, 세종실록, 언해본, 옛한글, 역사 타자" />
+  <meta name="theme-color" content="#7c3f2f" />
+  <!-- 사이트 주소가 바뀌면 아래 canonical·og:url·og:image 와 sitemap.xml·robots.txt 의 주소를 함께 바꾸세요 -->
+  <link rel="canonical" href="https://yeonghoon51-max.github.io/curly-pancake/" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <!-- 카카오톡·페이스북 등에 링크를 붙였을 때 보이는 미리보기 -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="옛글자" />
+  <meta property="og:title" content="옛글자 — 훈민정음·고서 세로쓰기 타자연습" />
+  <meta property="og:description" content="옛 책을 읽고, 오늘의 손으로 쓰다. 훈민정음과 조선의 기록을 세로쓰기로 따라 치는 무료 타자연습." />
+  <meta property="og:url" content="https://yeonghoon51-max.github.io/curly-pancake/" />
+  <meta property="og:image" content="https://yeonghoon51-max.github.io/curly-pancake/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <!-- 검색엔진이 이 사이트를 '웹 앱'으로 이해하도록 돕는 구조화 데이터 -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "옛글자 — 훈민정음·고서 세로쓰기 타자연습",
+    "url": "https://yeonghoon51-max.github.io/curly-pancake/",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "웹 브라우저",
+    "inLanguage": "ko",
+    "description": "훈민정음 서문, 용비어천가, 세종실록을 세로쓰기 화면에서 따라 치는 무료 한글 타자연습",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" }
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;800&display=swap" />
@@ -38,7 +68,8 @@
       <h1>옛 책을 읽고,<br>오늘의 손으로 쓰다.</h1>
       <p>훈민정음과 조선의 기록을 현대어로 읽으며 타자하는 역사 타자연습입니다. 원문의 세로쓰기 감각은 살리고, 입력은 오늘날의 한글 자판으로 합니다.</p>
     </div>
-    <div class="hero-note" id="heroNote"></div>
+    <!-- 검색엔진이 읽을 수 있도록 자바스크립트 없이도 보이는 글로 둔다 -->
+    <div class="hero-note">수록 문헌 4편<br><strong>훈민정음 · 훈민정음 해례본 · 용비어천가 · 세종실록</strong><br>세종 때의 글을 현대어로 풀어 쓴 연습문에, 언해본·한문 원문을 곁글로 함께 보여 줍니다.</div>
   </section>
 
   <!-- ================= 타자연습 ================= -->
@@ -180,6 +211,7 @@
   </form>
 </div>
 
+<noscript><div style="position:fixed;bottom:0;left:0;right:0;padding:14px;background:#7c3f2f;color:#fff;text-align:center">타자연습을 하려면 브라우저에서 자바스크립트를 켜 주세요.</div></noscript>
 <script src="js/lessons.js"></script>
 <script src="js/hangul.js"></script>
 <script src="js/app.js"></script>

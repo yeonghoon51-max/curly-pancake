@@ -512,10 +512,6 @@ function renderCards(){
   $('cards').innerHTML = html + `<button type="button" class="card add" id="addCustom"><b>＋</b>내 글로 연습하기<p>좋아하는 시나 문장을 넣어 세로쓰기로 연습해 보세요</p></button>`;
 }
 
-function heroNote(){
-  const books = [...new Set(LESSONS.map(l => l.book))];
-  $('heroNote').innerHTML = `수록 문헌 ${LESSONS.length}편<br><strong>${books.map(esc).join(' · ')}</strong><br>세종 때의 글을 현대어로 풀어 쓴 연습문에, 언해본·한문 원문을 곁글로 함께 보여 줍니다.`;
-}
 
 // 붙여 넣은 글을 문장 단위로 나눈다: 줄바꿈 → 문장부호 뒤 띄어쓰기
 function splitSentences(raw){
@@ -713,7 +709,6 @@ window.addEventListener('resize', () => { update(); });
 
 /* ---------------- 시작 ---------------- */
 applyTheme(); applySize(); applyToggles();
-heroNote();
 state.idx = Math.max(0, allLessons().findIndex(l => l.id === settings.lastId));
 render();
 renderRecords();
