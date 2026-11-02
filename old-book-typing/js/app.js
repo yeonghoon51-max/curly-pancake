@@ -32,6 +32,7 @@ const store = (() => {
   try{ data = JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {}; }catch(e){}
   if(!Array.isArray(data.records)) data.records = [];
   if(!Array.isArray(data.custom))  data.custom = [];
+  if(!data.progress || typeof data.progress !== 'object' || Array.isArray(data.progress)) data.progress = {};   // 긴 글 이어 하기
   data.settings = Object.assign({ theme:null, size:'m', sound:true, guide:true, gloss:'eonhae', lastId:null }, data.settings);
   return {
     data,
@@ -293,13 +294,25 @@ function render(){
   typing.value = ''; typing.readOnly = false;
   typing.maxLength = state.target.join('').length;
   closeResult();
-  showHint(HINT_START);
+
+  // 지난번에 치다 만 글이면 그 자리부터 이어 친다 (시간·누적 오타도 이어서)
+  const saved = store.data.progress[l.id];
+  if(saved && saved.value && [...saved.value].length < state.target.length){
+    typing.value = saved.value;
+    Object.assign(state, { clockMs: saved.clockMs || 0, mistakes: saved.mistakes || 0, misses: saved.misses || {}, judged: [...saved.value].length, prevWrong: Infinity });
+    const pct = Math.round([...saved.value].length / state.target.length * 100);
+    showHint(`📖 지난번 ${pct}%까지 쳤어요<small>아무 키나 누르면 이어서 칩니다 · <kbd>Esc</kbd> 처음부터</small>`);
+  }else{
+    showHint(HINT_START);
+  }
   update();
   renderCards();
   requestAnimationFrame(() => { columns.scrollLeft = columns.scrollWidth; centerCurrentColumn(false); });
 }
 
-function loadLesson(i, { scroll = true } = {}){
+function loadLesson(i, { scroll = true, save = true } = {}){
+  clearTimeout(typing._save);
+  if(save && state.target.length) saveProgress();   // 떠나기 전에 지금 글의 진행을 저장
   const n = allLessons().length;
   state.idx = ((i % n) + n) % n;
   render();
@@ -432,7 +445,18 @@ function getGrade(cpm, acc){
   return { label:'연습생 · 초심자', top:false };
 }
 
+/* 긴 글 이어 하기: 친 내용을 브라우저에 저장해 둔다 (10글자 이상일 때만) */
+function saveProgress(){
+  if(state.completed) return;
+  const id = curLesson().id;
+  if([...typing.value].length < 10) delete store.data.progress[id];
+  else store.data.progress[id] = { value: typing.value, clockMs: elapsedMs(), mistakes: state.mistakes, misses: state.misses, at: Date.now() };
+  store.save();
+}
+function clearProgress(){ delete store.data.progress[curLesson().id]; store.save(); }
+
 function finish(){
+  clearProgress();
   state.completed = true;
   typing.readOnly = true;
   const cpm = currentCpm();
@@ -492,7 +516,7 @@ function drawChart(samples){
 }
 
 function closeResult(){ $('resultOverlay').hidden = true; }
-function retryLesson(){ loadLesson(state.idx, { scroll:false }); hint.hidden = true; }
+function retryLesson(){ clearProgress(); loadLesson(state.idx, { scroll:false, save:false }); hint.hidden = true; }
 function nextLesson(){ loadLesson(state.idx + 1, { scroll:false }); }
 
 function renderRecords(){
@@ -519,9 +543,11 @@ function renderRecords(){
 function renderCards(){
   const html = allLessons().map((l, i) => {
     const n = l.modern.join(' ').length;
-    const level = n < 90 ? '짧은 글' : n < 150 ? '보통' : '긴 글';
+    const level = n < 200 ? '짧은 글' : n < 600 ? '보통' : '긴 글';
     const best = bestOf(l.id);
     const tags = [`${n}자`, level];
+    const prog = store.data.progress[l.id];
+    if(prog && prog.value) tags.push(`이어 하기 ${Math.round([...prog.value].length / [...l.modern.join(' ')].length * 100)}%`);
     if(l.eonhae)   tags.push((l.labels && l.labels.eonhae) || '언해본');
     if(l.original) tags.push('한문');
     return `<article class="card${i === state.idx ? ' current' : ''}" role="button" tabindex="0" data-i="${i}">
@@ -717,6 +743,8 @@ typing.addEventListener('input', () => {
   clearTimeout(typing._pause);
   typing._pause = setTimeout(() => stage.classList.remove('is-typing'), 600);
   update();
+  clearTimeout(typing._save);
+  typing._save = setTimeout(saveProgress, 800);
 });
 typing.addEventListener('focus', () => {
   stage.classList.add('focused');
@@ -726,9 +754,11 @@ typing.addEventListener('focus', () => {
 typing.addEventListener('blur', () => {
   stage.classList.remove('focused');
   pauseClock();                                   // 창을 벗어나면 시간도 멈춘다
+  saveProgress();
   if(!state.completed && typing.value.length){ showHint(HINT_PAUSE); updateStats(); }
 });
 window.addEventListener('resize', () => { update(); });
+window.addEventListener('pagehide', saveProgress);
 
 /* ---------------- 시작 ---------------- */
 applyTheme(); applySize(); applyToggles();
