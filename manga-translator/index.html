@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>말풍선 — 만화 번역기</title>
+  <meta name="description" content="만화·웹툰 페이지 사진을 올리면 말풍선을 찾아 원래 글자를 지우고 한국어 번역을 그 자리에 넣어 주는 무료 웹앱. 휴대폰에 앱처럼 설치할 수 있어요." />
+  <meta name="theme-color" content="#1f6feb" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="말풍선" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Gaegu:wght@700&family=Do+Hyeon&display=swap" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    try{
+      const s=JSON.parse(localStorage.getItem('malpungseon.v1')||'{}');
+      const dark = s.theme ? s.theme==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    }catch(e){}
+  </script>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><img src="icons/icon.svg" alt="" width="30" height="30" /><span>말풍선</span><small>만화 번역기</small></div>
+  <div class="top-actions">
+    <button class="icon-btn" id="themeBtn" type="button" aria-label="밝은/어두운 화면 바꾸기" title="밝은/어두운 화면">🌙</button>
+    <button class="icon-btn" id="settingsBtn" type="button" aria-label="설정" title="설정">⚙️</button>
+  </div>
+</header>
+
+<main id="app">
+  <!-- 처음 화면: 이미지 올리기 -->
+  <section id="empty" class="empty">
+    <label class="drop" id="drop" for="fileInput">
+      <div class="drop-icon" aria-hidden="true">💬</div>
+      <strong>만화 페이지 올리기</strong>
+      <span>사진을 고르거나, 여기로 끌어다 놓거나, <kbd>Ctrl</kbd>+<kbd>V</kbd> 로 붙여 넣으세요</span>
+      <span class="hint">여러 장을 한꺼번에 골라도 돼요 · JPG / PNG / WEBP</span>
+    </label>
+    <input id="fileInput" type="file" accept="image/*" multiple hidden />
+    <ol class="steps">
+      <li><b>1</b> 설정 ⚙️ 에서 Anthropic API 키를 넣어요 (처음 한 번)</li>
+      <li><b>2</b> 만화 페이지를 올리고 <em>번역하기</em> 를 눌러요</li>
+      <li><b>3</b> 말풍선을 눌러 번역을 고치고, 이미지로 저장해요</li>
+    </ol>
+    <p class="notice" id="keyNotice" hidden>⚠️ 아직 API 키가 없어요. <button type="button" class="link" data-open-settings>설정 열기</button></p>
+  </section>
+
+  <!-- 작업 화면 -->
+  <section id="work" class="work" hidden>
+    <div class="toolbar" role="toolbar" aria-label="페이지 도구">
+      <div class="group">
+        <button type="button" class="btn ghost" id="prevBtn" aria-label="이전 페이지">◀</button>
+        <span class="pageno" id="pageNo">1 / 1</span>
+        <button type="button" class="btn ghost" id="nextBtn" aria-label="다음 페이지">▶</button>
+      </div>
+      <div class="group">
+        <button type="button" class="btn primary" id="translateBtn">번역하기</button>
+        <button type="button" class="btn" id="translateAllBtn" title="아직 번역 안 한 페이지를 차례로 번역">전체 번역</button>
+        <button type="button" class="btn danger" id="stopBtn" hidden>중지</button>
+      </div>
+      <div class="group">
+        <button type="button" class="btn" id="addBtn" aria-pressed="false" title="화면을 끌어서 번역할 영역을 직접 고르기">＋ 영역</button>
+        <button type="button" class="btn" id="origBtn" aria-pressed="false" title="원본과 번역본 바꿔 보기 (단축키 O)">원본 보기</button>
+        <button type="button" class="btn" id="boxesBtn" aria-pressed="true" title="말풍선 테두리 표시">테두리</button>
+      </div>
+      <div class="group">
+        <button type="button" class="btn" id="saveBtn">💾 저장</button>
+        <button type="button" class="btn ghost" id="moreBtn" aria-haspopup="menu" aria-expanded="false">⋯</button>
+        <div class="menu" id="moreMenu" role="menu" hidden>
+          <button type="button" role="menuitem" id="saveAllBtn">모든 페이지 저장</button>
+          <button type="button" role="menuitem" id="addPagesBtn">페이지 더 올리기</button>
+          <button type="button" role="menuitem" id="clearRegionsBtn">이 페이지 번역 지우기</button>
+          <button type="button" role="menuitem" id="removePageBtn">이 페이지 빼기</button>
+          <button type="button" role="menuitem" id="closeAllBtn">모두 닫기</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="stage-wrap">
+        <div class="stage" id="stage">
+          <canvas id="canvas"></canvas>
+          <div class="overlay" id="overlay"></div>
+          <div class="busy" id="busy" hidden><div class="spinner"></div><span id="busyText">번역하는 중…</span></div>
+        </div>
+        <p class="status" id="status" aria-live="polite"></p>
+      </div>
+
+      <aside class="panel" id="panel" aria-label="대사 목록">
+        <div class="panel-head">
+          <strong>대사</strong><span class="count" id="count">0</span>
+        </div>
+        <ol class="regions" id="regions"></ol>
+        <p class="panel-empty" id="panelEmpty"><em>번역하기</em> 를 누르면 이 페이지의 대사가 여기에 나와요.<br />잘못 찾은 곳은 <em>＋ 영역</em> 으로 직접 고를 수 있어요.</p>
+      </aside>
+    </div>
+
+    <div class="strip" id="strip" aria-label="페이지 목록"></div>
+  </section>
+
+  <section class="about" id="about">
+    <h2>알아 두면 좋은 것</h2>
+    <ul>
+      <li><b>어떻게 동작하나요?</b> 페이지 이미지를 Claude 에 보내 말풍선 위치·원문·번역을 받고, 브라우저에서 말풍선의 흰 부분을 찾아 원래 글자를 지운 뒤 번역을 그 모양에 맞춰 넣어요.</li>
+      <li><b>내 API 키는 안전한가요?</b> 키는 이 기기의 브라우저에만 저장되고 Anthropic 으로만 전송돼요. 이 사이트에는 서버가 없어요. 남과 같이 쓰는 컴퓨터에서는 쓰고 나서 설정에서 키를 지워 주세요.</li>
+      <li><b>비용은요?</b> 페이지마다 Anthropic API 사용료가 들어요. 번역할 때마다 대략적인 금액을 아래에 보여 드려요. 설정에서 더 저렴한 모델을 고를 수도 있어요.</li>
+      <li><b>저작권</b> 이 앱은 본인이 가진 만화를 혼자 읽기 위한 도구예요. 번역한 이미지를 허락 없이 인터넷에 올리거나 나누면 저작권 침해가 될 수 있어요.</li>
+      <li><b>폰에 설치</b> 안드로이드 크롬: 메뉴 ⋮ → <em>홈 화면에 추가</em> / 아이폰 사파리: 공유 → <em>홈 화면에 추가</em></li>
+    </ul>
+  </section>
+</main>
+
+<!-- 설정 -->
+<dialog id="settings" class="dialog">
+  <form method="dialog" id="settingsForm">
+    <h2>설정</h2>
+    <label class="field">
+      <span>Anthropic API 키</span>
+      <div class="row">
+        <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-..." />
+        <button type="button" class="btn ghost" id="toggleKey" aria-label="키 보이기">👁</button>
+      </div>
+      <small><a href="https://platform.claude.com/" target="_blank" rel="noopener">Claude 개발자 콘솔</a> → API Keys 에서 만들 수 있어요. 이 브라우저에만 저장돼요.</small>
+    </label>
+    <div class="grid2">
+      <label class="field"><span>원문 언어</span><select id="source"></select></label>
+      <label class="field"><span>번역할 언어</span><select id="target"></select></label>
+    </div>
+    <div class="grid2">
+      <label class="field"><span>모델</span><select id="model"></select></label>
+      <label class="field"><span>번역 꼼꼼함</span>
+        <select id="effort">
+          <option value="low">빠르게</option>
+          <option value="medium">보통</option>
+          <option value="high">꼼꼼하게 (느림)</option>
+        </select>
+      </label>
+    </div>
+    <div class="grid2">
+      <label class="field"><span>글꼴</span>
+        <select id="font">
+          <option value="gothic">고딕 (본고딕)</option>
+          <option value="dohyeon">굵은 제목체 (도현)</option>
+          <option value="hand">손글씨 (개구)</option>
+        </select>
+      </label>
+      <label class="field"><span>글자 크기 <output id="scaleOut">100%</output></span>
+        <input id="scale" type="range" min="0.6" max="1.4" step="0.05" />
+      </label>
+    </div>
+    <label class="field">
+      <span>작품 메모 <small>(선택) 인물 이름, 말투, 용어 — 번역할 때 참고해요</small></span>
+      <textarea id="glossary" rows="4" placeholder="예) 주인공 ハルカ → 하루카, 반말을 씀&#10;先輩 → 선배&#10;판타지 학원물, 가볍고 유쾌한 분위기"></textarea>
+    </label>
+    <div class="dialog-actions">
+      <button type="button" class="btn ghost" id="clearKey">키 지우기</button>
+      <span class="spacer"></span>
+      <button class="btn primary" value="ok">저장</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

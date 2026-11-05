@@ -1,0 +1,191 @@
+/* =========================================================
+   말풍선 · 만화 번역기 — 스타일
+   1. 색 (밝은 / 어두운)   2. 기본·머리말   3. 첫 화면
+   4. 도구줄   5. 작업 화면(그림·패널)   6. 페이지 띠   7. 창·알림
+   ========================================================= */
+
+/* ---------- 1. 색 ---------- */
+:root{
+  --bg:#f4f5f7; --surface:#fff; --surface2:#f0f2f5; --line:#dde1e7;
+  --ink:#16191d; --muted:#5d6672; --faint:#9aa3ae;
+  --accent:#1f6feb; --accent-soft:#e7f0ff; --on-accent:#fff;
+  --danger:#d1242f; --ok:#1a7f37; --warn:#9a6700;
+  --box:#1f6feb; --box-sel:#ff6a00;
+  --shadow:0 8px 30px rgba(20,30,50,.08);
+  --overlay:rgba(15,20,30,.45);
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#0f1115; --surface:#171a20; --surface2:#1e222a; --line:#2b313b;
+  --ink:#e8ebf0; --muted:#a2abb7; --faint:#6d7682;
+  --accent:#5b9dff; --accent-soft:#1a2740; --on-accent:#0b1220;
+  --danger:#ff7b72; --ok:#56d364; --warn:#e3b341;
+  --box:#5b9dff; --box-sel:#ffa657;
+  --shadow:0 8px 30px rgba(0,0,0,.4);
+  --overlay:rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+
+/* ---------- 2. 기본 ---------- */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 "Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+kbd{font:12px/1 inherit;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:2px 5px;background:var(--surface2)}
+[hidden]{display:none !important}
+
+.topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;
+  height:56px;padding:0 max(16px,env(safe-area-inset-left));border-bottom:1px solid var(--line);
+  background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:900;font-size:18px;letter-spacing:-.02em}
+.brand small{font-weight:500;font-size:13px;color:var(--muted)}
+.top-actions{display:flex;gap:4px}
+.icon-btn{border:0;background:transparent;border-radius:10px;padding:8px 10px;font-size:18px;line-height:1}
+.icon-btn:hover{background:var(--surface2)}
+
+main{max-width:1500px;margin:0 auto;padding:16px}
+
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 13px;font-weight:500;
+  white-space:nowrap;line-height:1.2;min-height:38px}
+.btn:hover{background:var(--surface2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,var(--line))}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--surface2)}
+.btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.btn.small{min-height:30px;padding:4px 9px;font-size:13px;border-radius:8px}
+.link{border:0;background:none;color:var(--accent);text-decoration:underline;padding:0}
+
+/* ---------- 3. 첫 화면 ---------- */
+.empty{max-width:720px;margin:4vh auto 0}
+.drop{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;cursor:pointer;
+  padding:48px 20px;border:2px dashed var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow);
+  transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop-icon{font-size:46px;line-height:1}
+.drop strong{font-size:21px}
+.drop span{color:var(--muted)}
+.drop .hint{font-size:13px;color:var(--faint)}
+.steps{list-style:none;padding:0;margin:22px 0 0;display:grid;gap:8px}
+.steps li{display:flex;gap:10px;align-items:center;color:var(--muted)}
+.steps b{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:13px;flex:none}
+.steps em{font-style:normal;font-weight:700;color:var(--ink)}
+.notice{margin-top:16px;padding:10px 14px;border-radius:10px;background:color-mix(in srgb,var(--warn) 12%,var(--surface));color:var(--ink)}
+
+.about{max-width:900px;margin:40px auto 10px;color:var(--muted);font-size:14px}
+.about h2{font-size:16px;color:var(--ink)}
+.about ul{padding-left:18px;display:grid;gap:6px}
+.about b{color:var(--ink)}
+.about em{font-style:normal;font-weight:700}
+
+/* ---------- 4. 도구줄 ---------- */
+.toolbar{position:sticky;top:56px;z-index:20;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;
+  padding:8px 0 10px;background:var(--bg)}
+.group{display:flex;gap:6px;align-items:center;position:relative}
+.pageno{min-width:52px;text-align:center;font-variant-numeric:tabular-nums;color:var(--muted);font-size:14px}
+.menu{position:absolute;right:0;top:calc(100% + 6px);z-index:40;min-width:190px;padding:6px;border:1px solid var(--line);border-radius:12px;
+  background:var(--surface);box-shadow:var(--shadow);display:grid}
+.menu button{border:0;background:none;text-align:left;padding:9px 12px;border-radius:8px}
+.menu button:hover{background:var(--surface2)}
+
+/* ---------- 5. 작업 화면 ---------- */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.stage-wrap{min-width:0}
+.stage{position:relative;margin:0 auto;width:fit-content;max-width:100%;background:var(--surface);box-shadow:var(--shadow);
+  border-radius:6px;overflow:hidden;touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none}
+.stage canvas{display:block;max-width:100%;height:auto;max-height:calc(100vh - 190px);width:auto}
+.stage.adding{cursor:crosshair;touch-action:none}
+.overlay{position:absolute;inset:0}
+.overlay.hide-boxes .rbox:not(.sel){border-color:transparent;background:transparent}
+.overlay.hide-boxes .rbox:not(.sel) .rnum{display:none}
+.rbox{position:absolute;border:1.5px solid color-mix(in srgb,var(--box) 70%,transparent);border-radius:6px;
+  background:color-mix(in srgb,var(--box) 6%,transparent);cursor:pointer}
+.rbox:hover{border-color:var(--box)}
+.rbox.sel{border:2px solid var(--box-sel);background:color-mix(in srgb,var(--box-sel) 8%,transparent);cursor:move;touch-action:none}
+.rbox.pending{border-style:dashed;animation:pulse 1s ease-in-out infinite alternate}
+.rbox.err{border-color:var(--danger)}
+.rnum{position:absolute;left:-1px;top:-1px;transform:translate(-40%,-40%);min-width:20px;height:20px;padding:0 5px;border-radius:10px;
+  background:var(--box);color:#fff;font:700 11px/20px system-ui,sans-serif;text-align:center}
+.rbox.sel .rnum{background:var(--box-sel)}
+.handle{position:absolute;right:-8px;bottom:-8px;width:18px;height:18px;border-radius:50%;background:var(--box-sel);border:2px solid #fff;
+  cursor:nwse-resize;display:none;touch-action:none}
+.rbox.sel .handle{display:block}
+.draft{position:absolute;border:2px dashed var(--box-sel);background:color-mix(in srgb,var(--box-sel) 12%,transparent);pointer-events:none;border-radius:4px}
+@keyframes pulse{from{opacity:.45}to{opacity:1}}
+
+.busy{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:10px;
+  background:color-mix(in srgb,var(--surface) 55%,transparent);backdrop-filter:blur(1.5px);font-weight:700}
+.spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--accent);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status{min-height:22px;margin:8px 2px 0;font-size:13px;color:var(--muted);text-align:center}
+.status.err{color:var(--danger)}
+
+.panel{position:sticky;top:120px;max-height:calc(100vh - 136px);overflow:auto;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;box-shadow:var(--shadow)}
+.panel-head{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:12px 14px;background:var(--surface);border-bottom:1px solid var(--line)}
+.count{font-size:12px;padding:1px 8px;border-radius:10px;background:var(--surface2);color:var(--muted)}
+.panel-empty{padding:18px 16px;color:var(--muted);font-size:14px;margin:0}
+.panel-empty em{font-style:normal;font-weight:700;color:var(--ink)}
+.regions{list-style:none;margin:0;padding:6px}
+.region{padding:10px;border-radius:10px;border:1.5px solid transparent;display:grid;gap:6px}
+.region + .region{margin-top:2px}
+.region.sel{border-color:var(--box-sel);background:color-mix(in srgb,var(--box-sel) 6%,var(--surface))}
+.region-top{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.region-top .n{font-weight:700;color:var(--ink)}
+.tag{padding:0 7px;border-radius:8px;background:var(--surface2)}
+.orig{font-size:13px;color:var(--muted);word-break:break-all;cursor:pointer}
+.region textarea{width:100%;resize:vertical;min-height:52px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);line-height:1.45}
+.region textarea:focus{background:var(--surface)}
+.region-tools{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.region-tools select{max-width:118px;min-height:30px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:2px 6px;font-size:13px}
+.region-tools .spacer{flex:1}
+.region .err-msg{font-size:12px;color:var(--danger)}
+
+/* ---------- 6. 페이지 띠 ---------- */
+.strip{display:flex;gap:8px;overflow-x:auto;padding:14px 2px 6px;scroll-snap-type:x proximity}
+.thumb{position:relative;flex:none;width:64px;height:90px;border-radius:6px;overflow:hidden;border:2px solid transparent;padding:0;background:var(--surface);
+  scroll-snap-align:start}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.cur{border-color:var(--accent)}
+.thumb .badge{position:absolute;right:3px;bottom:3px;font-size:11px;line-height:1;padding:3px 4px;border-radius:5px;background:rgba(0,0,0,.65);color:#fff}
+.thumb .pn{position:absolute;left:3px;top:3px;font:700 11px/1 system-ui;padding:2px 4px;border-radius:4px;background:rgba(0,0,0,.55);color:#fff}
+
+/* ---------- 7. 창·알림 ---------- */
+.dialog{border:1px solid var(--line);border-radius:16px;padding:0;width:min(560px,calc(100vw - 24px));background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.dialog::backdrop{background:var(--overlay)}
+.dialog form{padding:20px;display:grid;gap:14px;max-height:calc(100vh - 40px);overflow:auto}
+.dialog h2{margin:0;font-size:19px}
+.field{display:grid;gap:5px;font-size:14px}
+.field > span{font-weight:700}
+.field small,.field > span small{font-weight:400;color:var(--muted);font-size:12.5px}
+.field input[type=password],.field input[type=text],.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--surface2)}
+.field textarea{resize:vertical;line-height:1.5}
+.field input[type=range]{width:100%}
+.field a{color:var(--accent)}
+.row{display:flex;gap:6px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dialog-actions{display:flex;gap:8px;align-items:center}
+.spacer{flex:1}
+
+.toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:60;max-width:calc(100vw - 32px);
+  padding:11px 16px;border-radius:12px;background:var(--ink);color:var(--bg);box-shadow:var(--shadow);font-size:14px}
+
+/* ---------- 반응형 (휴대폰) ---------- */
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr}
+  .panel{position:static;max-height:none}
+  .stage canvas{max-height:none}
+}
+@media (max-width:560px){
+  main{padding:10px 12px}
+  .toolbar{gap:6px 8px;top:56px}
+  .btn{padding:7px 10px;min-height:36px;font-size:14px}
+  .brand small{display:none}
+  .grid2{grid-template-columns:1fr}
+  .drop{padding:36px 16px}
+}
