@@ -61,7 +61,8 @@
 </header>
 
 <main>
-  <!-- 화면 셋: 첫 화면(#) → 책장(#shelf) → 타자(#read/문헌id). app.js 의 route() 가 주소에 따라 하나만 보여 준다. -->
+  <!-- 화면: 첫 화면(#) → 책장(#shelf) → 타자(#read/문헌id), 그리고 기록(#records) · 소개와 출처(#about, #license).
+       app.js 의 route() 가 주소에 따라 하나만 보여 준다. -->
   <div class="view" id="viewHome">
   <section class="hero">
     <div>
@@ -76,20 +77,9 @@
     <!-- 검색엔진이 읽을 수 있도록 자바스크립트 없이도 보이는 글로 둔다 -->
     <div class="hero-note">수록 문헌 18편 · 긴 글 14편<br><strong>훈민정음 · 용비어천가 · 고시조 · 세종·정조·순조·헌종·철종실록</strong><br>옛 글을 현대어로 풀어 쓴 연습문에, 언해본·한문 원문을 곁글로 함께 보여 줍니다.</div>
   </section>
-
-  <!-- ================= 기록 ================= -->
-  <div class="section-title" id="records">
-    <h2>나의 기록</h2><span>이 브라우저에만 저장됩니다</span>
   </div>
-  <div class="summary">
-    <div><span>완료한 연습</span><b id="sumCount">0</b></div>
-    <div><span>총 연습 시간</span><b id="sumTime">0분</b></div>
-    <div><span>평균 타수</span><b id="sumAvg">0</b></div>
-    <div><span>최고 타수</span><b id="sumBest">0</b></div>
-  </div>
-  <div class="table-wrap" id="recordTable"></div>
-  <div class="records-foot"><button type="button" class="linkish" id="clearRecords">기록 모두 지우기</button></div>
 
+  <div class="view" id="viewAbout" hidden>
   <!-- ================= 소개 ================= -->
   <div class="section-title" id="about"><h2>이 사이트의 방향</h2></div>
   <div class="about-card">
@@ -130,6 +120,21 @@
       <dd>원문 표기나 풀이에 잘못된 곳이 있으면 <a href="https://github.com/yeonghoon51-max/curly-pancake/issues" target="_blank" rel="noopener">GitHub 이슈</a>로 알려 주세요. 확인 후 바로잡겠습니다.</dd>
     </dl>
   </div>
+  </div>
+
+  <div class="view" id="viewRecords" hidden>
+  <!-- ================= 기록 ================= -->
+  <div class="section-title" id="records">
+    <h2>나의 기록</h2><span>이 브라우저에만 저장됩니다</span>
+  </div>
+  <div class="summary">
+    <div><span>완료한 연습</span><b id="sumCount">0</b></div>
+    <div><span>총 연습 시간</span><b id="sumTime">0분</b></div>
+    <div><span>평균 타수</span><b id="sumAvg">0</b></div>
+    <div><span>최고 타수</span><b id="sumBest">0</b></div>
+  </div>
+  <div class="table-wrap" id="recordTable"></div>
+  <div class="records-foot"><button type="button" class="linkish" id="clearRecords">기록 모두 지우기</button></div>
   </div>
 
   <div class="view" id="viewShelf" hidden>

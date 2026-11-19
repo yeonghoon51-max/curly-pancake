@@ -75,10 +75,11 @@ h1{font-size:clamp(30px,3.4vw,46px);line-height:1.12;margin:0 0 12px;letter-spac
 /* ---------- 2-1. 화면 전환 · 첫 화면 단추 ---------- */
 .view[hidden],a.big[hidden]{display:none}   /* display 지정보다 hidden 이 이기도록 */
 .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+#viewHome .hero{min-height:calc(100vh - 260px);align-content:center;margin-bottom:0}   /* 첫 화면은 제목과 시작하기만, 화면 가운데에 */
 a.big{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:17px;font-weight:600;padding:14px 34px;border-radius:10px}
 a.primary{color:var(--on-accent)}
 #viewShelf .section-title{margin-top:8px}
-#viewHome .section-title:first-of-type{margin-top:72px}
+#viewRecords .section-title,#viewAbout .section-title:first-child{margin-top:8px}
 .back-btn{border:1px solid var(--line);background:var(--chip);color:var(--ink);border-radius:999px;padding:6px 14px;font-size:13px;white-space:nowrap}
 .back-btn:hover{border-color:var(--accent2);color:var(--accent)}
 
