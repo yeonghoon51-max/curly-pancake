@@ -127,7 +127,8 @@ button.pill.active{border-color:var(--accent2);color:var(--accent);background:va
 /* 계선: 열과 열 사이 세로줄 (광곽 위아래까지) */
 .col::after{content:'';position:absolute;top:calc(var(--leaf-pad) * -1 + 4px);bottom:calc(var(--leaf-pad) * -1 + 4px);left:calc(var(--gap) / -2);border-left:1px solid var(--rule)}
 .col:last-child::after{display:none}
-.col .text{writing-mode:vertical-rl;text-orientation:mixed;white-space:pre;font-size:var(--f);line-height:1.9;
+.col .text{writing-mode:vertical-rl;text-orientation:upright;   /* 숫자·영문도 옆으로 눕지 않고 한글처럼 세워서 */
+  white-space:pre;font-size:var(--f);line-height:1.9;
   letter-spacing:.26em;        /* 글자 사이 틈: 커서가 이 틈 안에 그려져 글자를 가리지 않음 */
   height:var(--text-h);padding-top:var(--pt)}
 
@@ -288,7 +289,7 @@ body.focus-lock{overflow:hidden}
   transition:transform .18s ease,box-shadow .18s ease}
 .shelf-book:hover,.shelf-book:focus-visible{transform:translateY(-7px)}
 .shelf-book.current{transform:translateY(-14px);box-shadow:0 0 0 2px var(--accent),0 10px 16px -4px rgba(30,20,10,.45)}
-.shelf-book .label{position:absolute;top:10%;left:50%;transform:translateX(-50%);width:calc(100% - 10px);max-height:78%;overflow:hidden;line-height:1.25;
+.shelf-book .label{text-orientation:upright;position:absolute;top:10%;left:50%;transform:translateX(-50%);width:calc(100% - 10px);max-height:78%;overflow:hidden;line-height:1.25;
   writing-mode:vertical-rl;display:flex;align-items:center;gap:4px;padding:8px 0;
   background:var(--label-paper);color:#2b241c;border:1px solid rgba(0,0,0,.12);box-shadow:0 1px 2px rgba(0,0,0,.15)}
 .shelf-book .label b{font-size:13px;letter-spacing:.1em;font-weight:700;white-space:nowrap}
