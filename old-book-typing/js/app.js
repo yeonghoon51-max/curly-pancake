@@ -366,12 +366,13 @@ function loadLesson(i, { scroll = true, save = true } = {}){
 }
 
 /* ---------------- 화면 전환 ----------------
-   #           첫 화면 (소개, 시작하기, 기록)
+   #           첫 화면 (제목, 시작하기·이어 치기)
    #shelf      책장
    #read/문헌id 타자 화면
-   #records · #about · #license  첫 화면의 그 구역으로 */
+   #records    나의 기록
+   #about      소개 · 출처 및 저작권 안내 (#license 는 그 안의 출처 구역으로) */
 let view = 'home', cameFromShelf = false;
-const VIEWS = { home:'viewHome', shelf:'viewShelf', read:'viewRead' };
+const VIEWS = { home:'viewHome', shelf:'viewShelf', read:'viewRead', records:'viewRecords', about:'viewAbout' };
 function route(){
   const h = decodeURIComponent(location.hash.slice(1));
   let next = 'home', anchor = null;
@@ -381,7 +382,9 @@ function route(){
     const i = allLessons().findIndex(l => l.id === h.split('/')[1]);
     if(i >= 0 && i !== state.idx) loadLesson(i, { scroll:false });
   }
-  else if(['records', 'about', 'license'].includes(h)) anchor = h;
+  else if(h === 'records') next = 'records';
+  else if(h === 'about') next = 'about';
+  else if(h === 'license'){ next = 'about'; anchor = 'license'; }
   showView(next, anchor);
 }
 function showView(next, anchor){
@@ -392,7 +395,8 @@ function showView(next, anchor){
   cameFromShelf = view === 'shelf' && next === 'read';
   view = next;
   for(const [k, id] of Object.entries(VIEWS)) $(id).hidden = k !== next;
-  document.querySelectorAll('.topnav a[data-nav]').forEach(a => a.classList.toggle('active', a.dataset.nav === (anchor || next)));
+  document.querySelectorAll('.topnav a[data-nav]').forEach(a => a.classList.toggle('active', a.dataset.nav === next));
+  if(next === 'records') renderRecords();
   if(next === 'shelf') renderCards();
   if(next === 'home') updateResume();
   if(anchor) $(anchor).scrollIntoView();
