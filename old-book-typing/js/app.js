@@ -611,27 +611,57 @@ function renderRecords(){
 }
 
 /* ---------------- 7. 문헌 목록 · 내 글 넣기 ---------------- */
-function renderCards(){
-  const html = allLessons().map((l, i) => {
-    const n = l.modern.join(' ').length;
-    const level = n < 200 ? '짧은 글' : n < 600 ? '보통' : '긴 글';
-    const best = bestOf(l.id);
-    const tags = [`${n}자`, level];
-    const prog = store.data.progress[l.id];
-    if(prog && prog.value) tags.push(`이어 하기 ${Math.round([...prog.value].length / [...l.modern.join(' ')].length * 100)}%`);
-    if(l.eonhae)   tags.push((l.labels && l.labels.eonhae) || '언해본');
-    if(l.original) tags.push((l.labels && l.labels.original) || '한문');
-    return `<article class="card${i === state.idx ? ' current' : ''}" role="button" tabindex="0" data-i="${i}">
-        <div class="num">${String(i + 1).padStart(2,'0')} · ${esc(l.era || '')}</div>
-        <h3>${esc(l.book)}</h3>${l.title ? `<div class="sub">${esc(l.title)}</div>` : ''}
-        <p>${esc(l.desc || '')}</p>
-        <div class="meta">${tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}${best ? `<span class="tag gold">최고 ${best}타</span>` : ''}</div>
-        ${l.custom ? `<button type="button" class="card-del" data-del="${esc(l.id)}" aria-label="이 글 지우기" title="지우기">✕</button>` : ''}
-      </article>`;
-  }).join('');
-  $('cards').innerHTML = html + `<button type="button" class="card add" id="addCustom"><b>＋</b>내 글로 연습하기<p>좋아하는 시나 문장을 넣어 세로쓰기로 연습해 보세요</p></button>`;
+/* 책장: 문헌을 책등이 보이게 꽂아 둔 책으로 보여 준다.
+   칸은 단문 연습 / 긴 글 연습(LONG_TEXT자 이상) / 내 글(직접 넣은 글) 셋.
+   책 두께는 글 길이, 책갈피는 이어 하기, 畢 도장은 끝까지 친 적이 있다는 뜻. */
+const LONG_TEXT = 600;
+const COVERS = ['#2f4a6b', '#7a4b32', '#8e3b2e', '#4d6650', '#5b4a6e', '#9a7430', '#3d3a36'];
+const lessonLen = l => [...l.modern.join(' ')].length;
+
+function bookHtml(l, i){
+  const n = lessonLen(l);
+  const w = Math.round(Math.min(80, Math.max(34, 26 + n / 20)));       // 두께: 글이 길수록 두껍게
+  const h = 226 - ((i * 3) % 5) * 6;                                      // 키를 조금씩 달리해 자연스럽게
+  const cover = l.cover || (l.custom ? '' : COVERS[i % COVERS.length]);
+  const prog = store.data.progress[l.id];
+  const pct = prog && prog.value ? Math.round([...prog.value].length / n * 100) : 0;
+  const best = bestOf(l.id);
+  const name = l.title ? `${l.book} · ${l.title}` : l.book;
+  const level = n < 200 ? '짧은 글' : n < LONG_TEXT ? '보통' : '긴 글';
+  const label = `${name}, ${n}자${best ? `, 최고 ${best}타` : ''}${pct ? `, 이어 하기 ${pct}%` : ''}`;
+  const [spineMain, spineSub] = l.spine || [[...l.book].slice(0, 7).join(''), l.title];
+  return `<div class="book-slot">
+      <button type="button" class="book${l.custom ? ' note' : ''}${w >= 48 ? ' thick' : ''}${i === state.idx ? ' current' : ''}" data-i="${i}"
+        style="--w:${w}px;--h:${h}px${cover ? `;--cover:${cover}` : ''}" aria-label="${esc(label)}">
+        <span class="label"><b>${esc(spineMain)}</b>${spineSub ? `<small>${esc(spineSub)}</small>` : ''}</span>
+        ${pct ? '<span class="ribbon" aria-hidden="true"></span>' : ''}
+        ${best ? '<span class="seal" aria-hidden="true">畢</span>' : ''}
+      </button>
+      <div class="book-tip" aria-hidden="true">
+        <b>${esc(name)}</b><span>${esc(l.era || '')}</span>
+        <span>${n}자 · ${level}${best ? ` · 최고 <em>${best}타</em>` : ''}</span>
+        ${pct ? `<span class="tip-prog">책갈피 · ${pct}%까지 쳤어요</span>` : ''}
+      </div>
+      ${l.custom ? `<button type="button" class="book-del" data-del="${esc(l.id)}" aria-label="${esc(l.book)} 지우기" title="지우기">✕</button>` : ''}
+    </div>`;
 }
 
+function renderCards(){
+  const all = allLessons();
+  const groups = [
+    { name:'단문 연습',  items:[] },
+    { name:'긴 글 연습', items:[] },
+    { name:'내 글',      items:[] }
+  ];
+  all.forEach((l, i) => groups[l.custom ? 2 : lessonLen(l) >= LONG_TEXT ? 1 : 0].items.push(bookHtml(l, i)));
+  groups[2].items.push(`<div class="book-slot"><button type="button" class="book add" id="addCustom" aria-label="새 공책: 내 글로 연습하기">
+      <span class="label"><b>＋ 새 공책</b></span></button></div>`);
+  $('shelves').innerHTML = groups.map(g => `
+    <section class="shelf" aria-label="${g.name}">
+      <div class="shelf-row">${g.items.join('')}</div>
+      <div class="plank"><span class="shelf-name">${g.name}<small>${g.name === '내 글' ? all.filter(l => l.custom).length : g.items.length}권</small></span></div>
+    </section>`).join('');
+}
 
 // 붙여 넣은 글을 문장 단위로 나눈다: 줄바꿈 → 문장부호 뒤 띄어쓰기
 function splitSentences(raw){
@@ -739,16 +769,12 @@ $('practice').addEventListener('click', e => {
   }
 });
 
-$('cards').addEventListener('click', e => {
+$('shelves').addEventListener('click', e => {
   const del = e.target.closest('[data-del]');
-  if(del){ e.stopPropagation(); deleteCustom(del.dataset.del); return; }
+  if(del){ deleteCustom(del.dataset.del); return; }
   if(e.target.closest('#addCustom')){ openCustom(); return; }
-  const card = e.target.closest('.card[data-i]');
-  if(card) loadLesson(+card.dataset.i);
-});
-$('cards').addEventListener('keydown', e => {
-  const card = e.target.closest('.card[data-i]');
-  if(card && e.target === card && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); loadLesson(+card.dataset.i); }
+  const book = e.target.closest('.book[data-i]');
+  if(book) loadLesson(+book.dataset.i);
 });
 $('customForm').addEventListener('submit', saveCustom);
 $('customCancel').addEventListener('click', closeCustom);
@@ -802,7 +828,7 @@ document.addEventListener('keydown', e => {
   if(state.completed || e.ctrlKey || e.metaKey || e.altKey) return;
   const tag = (document.activeElement && document.activeElement.tagName) || '';
   if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-  if(document.activeElement && document.activeElement.closest && document.activeElement.closest('.card') && (e.key === 'Enter' || e.key === ' ')) return;
+  if((tag === 'BUTTON' || tag === 'A') && (e.key === 'Enter' || e.key === ' ')) return;   // 단추(책 등)를 누르는 키는 그대로 둔다
   const typable = e.key.length === 1 || e.key === 'Process' || e.key === 'Backspace';
   if(typable && practiceInView()){
     e.preventDefault();

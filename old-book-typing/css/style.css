@@ -20,6 +20,7 @@
   --green:#45604a; --red:#c0392b; --gold:#a5752a;
   --gloss-dim:#cfc2ad; --mark:#c4b298; --pn-dim:#9a7660;
   --leaf:#fdf9f0; --frame:rgba(100,66,45,.55); --frame-ink:rgba(70,45,30,.72);
+  --case-top:#e6d6bb; --case-bottom:#d9c6a5; --wood-hi:#b98d5f; --wood:#9a6f45; --wood-lo:#6f4d2f; --thread:rgba(240,228,205,.55); --label-paper:#f1e8d4;
   --shadow:0 18px 50px rgba(65,48,31,.12);
   --overlay:rgba(37,30,22,.5);
   --fs:22px;                       /* 세로쓰기 글자 크기 (설정에서 바뀜) */
@@ -35,6 +36,7 @@
   --green:#93b99a; --red:#ff7363; --gold:#d6aa5c;
   --gloss-dim:#75695a; --mark:#7d7060; --pn-dim:#b08d74;
   --leaf:#25211b; --frame:rgba(225,195,160,.32); --frame-ink:rgba(225,195,160,.5);
+  --case-top:#2a231c; --case-bottom:#211b15; --wood-hi:#6d5038; --wood:#55402c; --wood-lo:#3a2b1d; --thread:rgba(240,228,205,.45); --label-paper:#e2d6bd;
   --shadow:0 18px 50px rgba(0,0,0,.4);
   --overlay:rgba(0,0,0,.62);
   color-scheme:dark;
@@ -252,22 +254,64 @@ body.focus-lock{overflow:hidden}
 .section-title{margin:64px 0 18px;display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
 .section-title h2{margin:0;font-size:25px}
 .section-title span{font-size:13px;color:var(--muted)}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-.card{position:relative;border:1px solid var(--line);background:var(--card);padding:20px 22px;border-radius:6px;text-align:left;transition:.2s;display:flex;flex-direction:column;gap:6px}
-button.card,.card[role=button]{cursor:pointer}
-button.card:hover,.card[role=button]:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(65,48,31,.1);border-color:var(--accent2)}
-.card.current{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
-.card .num{font-size:12px;color:var(--accent);letter-spacing:.08em}
-.card h3{margin:2px 0 0;font-size:18px}
-.card .sub{font-size:13px;color:var(--ink);opacity:.8}
-.card p{margin:0;color:var(--muted);font-size:13px;line-height:1.7}
-.card .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .tag{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--muted);background:var(--chip)}
-.tag.gold{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 45%,var(--line))}
-.card.add{border-style:dashed;align-items:center;justify-content:center;text-align:center;color:var(--muted);min-height:150px}
-.card.add b{font-size:26px;font-weight:400;color:var(--accent)}
-.card-del{position:absolute;top:10px;right:10px;border:0;background:transparent;color:var(--muted);font-size:15px;width:28px;height:28px;border-radius:6px}
-.card-del:hover{background:var(--soft);color:var(--red)}
+
+/* 고서 책장 ------------------------------------------------------------
+   책 하나 = 선장본의 책등. 실 매듭 다섯 군데(오침), 위쪽에 제목 종이(제첨).
+   --w 두께, --h 키, --cover 표지 색은 app.js 가 책마다 정해 준다. */
+.bookcase{border:1px solid var(--line);border-radius:6px;padding:26px 22px 8px;
+  background:linear-gradient(180deg,var(--case-top),var(--case-bottom));box-shadow:inset 0 2px 18px rgba(40,25,10,.12)}
+.shelf{margin-bottom:30px}
+.shelf-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px;min-height:244px;padding:0 18px}
+.plank{position:relative;height:16px;border-radius:2px;
+  background:linear-gradient(180deg,var(--wood-hi),var(--wood) 35%,var(--wood-lo));box-shadow:0 6px 10px -4px rgba(40,25,10,.35)}
+.shelf-name{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);white-space:nowrap;
+  font-size:12px;font-weight:700;letter-spacing:.12em;color:#3a2a1b;background:#e8dcc2;border:1px solid #b89c6e;border-radius:2px;padding:2px 12px}
+.shelf-name small{font-weight:500;letter-spacing:0;margin-left:6px;opacity:.7}
+
+.book-slot{position:relative}
+.book{position:relative;display:block;width:var(--w);height:var(--h);padding:0;border:0;border-radius:2px 2px 0 0;cursor:pointer;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.10),transparent 18%,transparent 78%,rgba(0,0,0,.22)),
+    linear-gradient(180deg,transparent 9%,var(--thread) 9%,var(--thread) calc(9% + 2px),transparent 0,
+                           transparent 29%,var(--thread) 29%,var(--thread) calc(29% + 2px),transparent 0,
+                           transparent 50%,var(--thread) 50%,var(--thread) calc(50% + 2px),transparent 0,
+                           transparent 71%,var(--thread) 71%,var(--thread) calc(71% + 2px),transparent 0,
+                           transparent 91%,var(--thread) 91%,var(--thread) calc(91% + 2px),transparent 0),
+    var(--cover,#6b5a48);
+  box-shadow:0 1px 0 rgba(255,255,255,.08) inset,0 4px 8px -2px rgba(30,20,10,.35);
+  transition:transform .18s ease,box-shadow .18s ease}
+.book:hover,.book:focus-visible{transform:translateY(-7px)}
+.book.current{transform:translateY(-14px);box-shadow:0 0 0 2px var(--accent),0 10px 16px -4px rgba(30,20,10,.45)}
+.book .label{position:absolute;top:10%;left:50%;transform:translateX(-50%);width:calc(100% - 10px);max-height:78%;overflow:hidden;line-height:1.25;
+  writing-mode:vertical-rl;display:flex;align-items:center;gap:4px;padding:8px 0;
+  background:var(--label-paper);color:#2b241c;border:1px solid rgba(0,0,0,.12);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.book .label b{font-size:13px;letter-spacing:.1em;font-weight:700;white-space:nowrap}
+/* 두꺼운 책: 큰 이름과 작은 이름을 두 줄(오른쪽→왼쪽)로 나란히 */
+.book.thick .label{flex-direction:column;justify-content:center;gap:6px;padding:10px 4px;width:auto;min-width:56%}
+.book.thick .label b{font-size:14px}
+.book.thick .label small{font-size:11px}
+.book .label small{font-size:10px;letter-spacing:.05em;opacity:.7;white-space:nowrap}
+/* 책갈피(이어 하기)와 畢 도장(완료) */
+.book .ribbon{position:absolute;top:-10px;right:22%;width:7px;height:34px;background:#b33a2c;clip-path:polygon(0 0,100% 0,100% 100%,50% 82%,0 100%)}
+.book .seal{position:absolute;bottom:5%;left:50%;transform:translateX(-50%) rotate(-6deg);font-size:11px;font-weight:800;color:#c44a3a;
+  border:1.5px solid #c44a3a;border-radius:3px;padding:1px 2px;line-height:1.1;background:rgba(255,245,235,.08)}
+/* 내 글(공책)과 새 공책 */
+.book.note{--cover:#cdb98f;--thread:rgba(80,55,30,.35)}
+.book.add{--w:42px;--h:170px;background:transparent;border:1.5px dashed var(--accent2);box-shadow:none;color:var(--accent)}
+.book.add .label{background:transparent;border:0;box-shadow:none;color:var(--accent);top:10%;max-height:80%}
+.book-del{position:absolute;top:-8px;right:-8px;z-index:3;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);
+  background:var(--paper);color:var(--muted);font-size:11px;line-height:1;opacity:0;transition:opacity .15s}
+.book-slot:hover .book-del,.book-del:focus-visible{opacity:1}
+.book-del:hover{color:var(--red);border-color:var(--red)}
+/* 마우스를 올리면 뜨는 설명표 */
+.book-tip{position:absolute;bottom:calc(100% + 18px);left:50%;transform:translate(-50%,4px);z-index:4;width:max-content;max-width:230px;
+  display:flex;flex-direction:column;gap:2px;padding:10px 13px;border-radius:6px;font-size:12px;line-height:1.55;
+  background:var(--paper);border:1px solid var(--line);box-shadow:var(--shadow);color:var(--muted);opacity:0;pointer-events:none;transition:.15s}
+.book-tip b{color:var(--ink);font-size:13px}
+.book-tip em{font-style:normal;color:var(--gold);font-weight:700}
+.book-tip .tip-prog{color:#b33a2c}
+@media (hover:hover){ .book-slot:hover .book-tip,.book-slot:focus-within .book-tip{opacity:1;transform:translate(-50%,0)} }
 
 .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
 .summary div{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:16px 18px}
@@ -345,6 +389,9 @@ footer{padding:28px 5vw;border-top:1px solid var(--line);color:var(--muted);font
   .bookbar{padding:10px 12px}
   .side{padding:18px 16px}
   .hero-note,.shortcuts{display:none}
+  .bookcase{padding:22px 10px 6px}
+  .shelf-row{padding:0 6px;gap:4px;min-height:220px}
+  .book{width:calc(var(--w) * .92);height:calc(var(--h) * .92)}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;animation:none!important;scroll-behavior:auto!important}

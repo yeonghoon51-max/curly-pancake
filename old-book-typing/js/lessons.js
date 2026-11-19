@@ -13,10 +13,12 @@
    eonhae   : (선택) 옛한글 원문, modern 과 같은 개수
    original : (선택) 한문 원문, modern 과 같은 개수
    labels   : (선택) 곁글 버튼 이름 바꾸기 {eonhae:'옛한글', original:'지은이'}
+   spine    : (선택) 책장의 책등에 쓸 짧은 이름 [큰 글씨, 작은 글씨] — 없으면 book, title
    ========================================================= */
 const LESSONS = [
   {
     id: 'hunmin-eoje',
+    spine: ['훈민정음', '어제 서문'],
     era: '세종 · 1446',
     book: '훈민정음',
     title: '어제 서문',
@@ -40,6 +42,7 @@ const LESSONS = [
   },
   {
     id: 'hunmin-jeonginji',
+    spine: ['훈민정음', '정인지 서문'],
     era: '세종 · 1446',
     book: '훈민정음 해례본',
     title: '정인지 서문',
@@ -58,6 +61,7 @@ const LESSONS = [
   },
   {
     id: 'yongbi-1-2',
+    spine: ['용비어천가', '1·2장'],
     era: '세종 · 1447',
     book: '용비어천가',
     title: '제1장 · 제2장',
@@ -82,6 +86,7 @@ const LESSONS = [
   },
   {
     id: 'sejong-sillok-1443',
+    spine: ['세종실록', '창제 기사'],
     era: '세종 25년 · 1443',
     book: '세종실록',
     title: '훈민정음 창제 기사',
@@ -104,6 +109,7 @@ const LESSONS = [
   /* ---------------- 긴 글 (약 1,000자) ---------------- */
   {
     id: 'jeonginji-full',
+    spine: ['훈민정음', '정인지 서문 전문'],
     era: '세종 · 1446',
     book: '훈민정음 해례본',
     title: '정인지 서문 (전문)',
@@ -156,6 +162,7 @@ const LESSONS = [
   },
   {
     id: 'sijo-16',
+    spine: ['고시조', '열여섯 수'],
     era: '고려 말 ~ 조선 중기',
     book: '고시조 모음',
     title: '열여섯 수',
