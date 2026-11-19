@@ -127,8 +127,7 @@ button.pill.active{border-color:var(--accent2);color:var(--accent);background:va
 /* 계선: 열과 열 사이 세로줄 (광곽 위아래까지) */
 .col::after{content:'';position:absolute;top:calc(var(--leaf-pad) * -1 + 4px);bottom:calc(var(--leaf-pad) * -1 + 4px);left:calc(var(--gap) / -2);border-left:1px solid var(--rule)}
 .col:last-child::after{display:none}
-.col .text{writing-mode:vertical-rl;text-orientation:upright;   /* 숫자·영문도 옆으로 눕지 않고 한글처럼 세워서 */
-  white-space:pre;font-size:var(--f);line-height:1.9;
+.col .text{writing-mode:vertical-rl;text-orientation:mixed;white-space:pre;font-size:var(--f);line-height:1.9;
   letter-spacing:.26em;        /* 글자 사이 틈: 커서가 이 틈 안에 그려져 글자를 가리지 않음 */
   height:var(--text-h);padding-top:var(--pt)}
 
@@ -146,6 +145,8 @@ button.pill.active{border-color:var(--accent2);color:var(--accent);background:va
 :root[data-theme="dark"] .col .text,:root[data-theme="dark"] .hg-track{font-weight:500}
 .col .text span{position:relative;color:var(--faint);transition:color .08s ease}
 .col .text span.sp{letter-spacing:.2em}
+/* 숫자·영문은 세워서, 오타로 친 글자도 세워서 보여 준다 (괄호·따옴표 등은 세로쓰기대로 눕힘) */
+.col .text span.up,.col .text span.wrong{text-orientation:upright}
 .col .text span.correct{color:var(--ink)}
 .col .text span.composing{color:var(--ink)}
 /* 오타: 제자리에 '실제로 친 글자'를 빨갛게 + 밑줄, 옆에 '원래 글자'를 작게 */

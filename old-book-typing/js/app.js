@@ -123,8 +123,12 @@ function splitVertical(text, size = COL_MAX){
   return cols;
 }
 
+// 세로쓰기에서 숫자·영문은 한글처럼 세우고(up), 괄호·따옴표·줄표 같은 기호는 세로쓰기 방식대로 눕힌다.
+const UPRIGHT = /[0-9A-Za-z%]/;
+const baseClass = c => c === ' ' ? 'sp' : UPRIGHT.test(c) ? 'up' : '';
 function spanHtml(c){
-  return `<span${c === ' ' ? ' class="sp"' : ''} data-c="${esc(c)}"${PUNCT.test(c) ? ' data-pn="1"' : ''}>${esc(c)}</span>`;
+  const cls = baseClass(c);
+  return `<span${cls ? ` class="${cls}"` : ''} data-c="${esc(c)}"${PUNCT.test(c) ? ' data-pn="1"' : ''}>${esc(c)}</span>`;
 }
 
 // 각 열은 위에서 아래로 읽고, 다음 열은 오른쪽에서 왼쪽으로 이어진다.
@@ -411,7 +415,7 @@ function update(){
   const lim = Math.min(spans.length, Math.max(state.paintLen, typed.length) + 1);
   for(let k = 0; k < lim; k++){
     const sp = spans[k], c = sp.dataset.c;
-    let cls = c === ' ' ? 'sp' : '', text = c, want = null;
+    let cls = baseClass(c), text = c, want = null;
     if(k < committed){
       if(typed[k] === T[k]) cls += ' correct';
       else{ cls += ' wrong'; text = showChar(typed[k]); want = showChar(T[k] ?? ''); }
