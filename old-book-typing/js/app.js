@@ -631,7 +631,7 @@ function bookHtml(l, i){
   const label = `${name}, ${n}자${best ? `, 최고 ${best}타` : ''}${pct ? `, 이어 하기 ${pct}%` : ''}`;
   const [spineMain, spineSub] = l.spine || [[...l.book].slice(0, 7).join(''), l.title];
   return `<div class="book-slot">
-      <button type="button" class="book${l.custom ? ' note' : ''}${w >= 48 ? ' thick' : ''}${i === state.idx ? ' current' : ''}" data-i="${i}"
+      <button type="button" class="shelf-book${l.custom ? ' note' : ''}${w >= 48 ? ' thick' : ''}${i === state.idx ? ' current' : ''}" data-i="${i}"
         style="--w:${w}px;--h:${h}px${cover ? `;--cover:${cover}` : ''}" aria-label="${esc(label)}">
         <span class="label"><b>${esc(spineMain)}</b>${spineSub ? `<small>${esc(spineSub)}</small>` : ''}</span>
         ${pct ? '<span class="ribbon" aria-hidden="true"></span>' : ''}
@@ -654,7 +654,7 @@ function renderCards(){
     { name:'내 글',      items:[] }
   ];
   all.forEach((l, i) => groups[l.custom ? 2 : lessonLen(l) >= LONG_TEXT ? 1 : 0].items.push(bookHtml(l, i)));
-  groups[2].items.push(`<div class="book-slot"><button type="button" class="book add" id="addCustom" aria-label="새 공책: 내 글로 연습하기">
+  groups[2].items.push(`<div class="book-slot"><button type="button" class="shelf-book add" id="addCustom" aria-label="새 공책: 내 글로 연습하기">
       <span class="label"><b>＋ 새 공책</b></span></button></div>`);
   $('shelves').innerHTML = groups.map(g => `
     <section class="shelf" aria-label="${g.name}">
@@ -773,7 +773,7 @@ $('shelves').addEventListener('click', e => {
   const del = e.target.closest('[data-del]');
   if(del){ deleteCustom(del.dataset.del); return; }
   if(e.target.closest('#addCustom')){ openCustom(); return; }
-  const book = e.target.closest('.book[data-i]');
+  const book = e.target.closest('.shelf-book[data-i]');
   if(book) loadLesson(+book.dataset.i);
 });
 $('customForm').addEventListener('submit', saveCustom);
