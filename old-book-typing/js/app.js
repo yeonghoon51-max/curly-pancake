@@ -718,7 +718,7 @@ function renderCards(){
     { name:'긴 글 · 조선왕조실록', items:[] },
     { name:'내 글',              items:[] }
   ];
-  const groupOf = l => l.custom ? 3 : lessonLen(l) < LONG_TEXT ? 0 : /실록$/.test(l.book) ? 2 : 1;
+  const groupOf = l => l.custom ? 3 : lessonLen(l) < LONG_TEXT ? 0 : /(실록|^연산군일기|^광해군일기)$/.test(l.book) ? 2 : 1;
   // 칸 안에서는 시대 순서로 꽂는다 (era 속 네 자리 연도 기준, 연도가 없으면 맨 앞, 내 글은 넣은 순서)
   const yearOf = l => +(((l.era || '').match(/\d{4}/) || [0])[0]);
   all.map((l, i) => ({ l, i }))
