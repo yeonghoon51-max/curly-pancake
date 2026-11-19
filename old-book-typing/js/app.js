@@ -206,7 +206,9 @@ function buildGlosses(){
     let cum = 0;
     const bounds = lens.map(n => (cum += n) / total);
 
-    const words = clean(sentence).split(' ').map(w => Hangul.graphemes(w));
+    // 띄어쓰기 없이 긴 구절(예: 인명·숫자가 이어진 한문)은 8자씩 끊어야 여러 열에 고르게 나뉜다
+    const words = clean(sentence).split(' ').map(w => Hangul.graphemes(w))
+      .flatMap(g => g.length <= 8 ? [g] : Array.from({ length: Math.ceil(g.length / 8) }, (_, k) => g.slice(k * 8, k * 8 + 8)));
     const srcTotal = words.reduce((a, w) => a + w.length, 0) || 1;
     const perCol = sc.map(() => []);
     let before = 0;
