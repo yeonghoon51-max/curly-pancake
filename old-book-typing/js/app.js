@@ -653,7 +653,11 @@ function renderCards(){
     { name:'긴 글 연습', items:[] },
     { name:'내 글',      items:[] }
   ];
-  all.forEach((l, i) => groups[l.custom ? 2 : lessonLen(l) >= LONG_TEXT ? 1 : 0].items.push(bookHtml(l, i)));
+  // 칸 안에서는 시대 순서로 꽂는다 (era 속 네 자리 연도 기준, 연도가 없으면 맨 앞, 내 글은 넣은 순서)
+  const yearOf = l => +(((l.era || '').match(/\d{4}/) || [0])[0]);
+  all.map((l, i) => ({ l, i }))
+     .sort((x, y) => (x.l.custom || y.l.custom) ? x.i - y.i : (yearOf(x.l) - yearOf(y.l)) || (x.i - y.i))
+     .forEach(({ l, i }) => groups[l.custom ? 2 : lessonLen(l) >= LONG_TEXT ? 1 : 0].items.push(bookHtml(l, i)));
   groups[2].items.push(`<div class="book-slot"><button type="button" class="shelf-book add" id="addCustom" aria-label="새 공책: 내 글로 연습하기">
       <span class="label"><b>＋ 새 공책</b></span></button></div>`);
   $('shelves').innerHTML = groups.map(g => `
