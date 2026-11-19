@@ -630,9 +630,9 @@ function bookHtml(l, i){
   const level = n < 200 ? '짧은 글' : n < LONG_TEXT ? '보통' : '긴 글';
   const label = `${name}, ${n}자${best ? `, 최고 ${best}타` : ''}${pct ? `, 이어 하기 ${pct}%` : ''}`;
   const [spineMain, spineSub] = l.spine || [[...l.book].slice(0, 7).join(''), l.title];
-  return `<div class="book-slot">
+  return `<div class="book-slot" style="--w:${w}px;--h:${h}px${cover ? `;--cover:${cover}` : ''}">
       <button type="button" class="shelf-book${l.custom ? ' note' : ''}${w >= 48 ? ' thick' : ''}${i === state.idx ? ' current' : ''}" data-i="${i}"
-        style="--w:${w}px;--h:${h}px${cover ? `;--cover:${cover}` : ''}" aria-label="${esc(label)}">
+        aria-label="${esc(label)}">
         <span class="label"><b>${esc(spineMain)}</b>${spineSub ? `<small>${esc(spineSub)}</small>` : ''}</span>
         ${pct ? '<span class="ribbon" aria-hidden="true"></span>' : ''}
         ${best ? '<span class="seal" aria-hidden="true">畢</span>' : ''}
@@ -648,19 +648,22 @@ function bookHtml(l, i){
 
 function renderCards(){
   const all = allLessons();
+  // 칸: 단문 연습 / 긴 글 · 고전 / 긴 글 · 조선왕조실록(책 이름이 '…실록') / 내 글
   const groups = [
-    { name:'단문 연습',  items:[] },
-    { name:'긴 글 연습', items:[] },
-    { name:'내 글',      items:[] }
+    { name:'단문 연습',          items:[] },
+    { name:'긴 글 · 고전',        items:[] },
+    { name:'긴 글 · 조선왕조실록', items:[] },
+    { name:'내 글',              items:[] }
   ];
+  const groupOf = l => l.custom ? 3 : lessonLen(l) < LONG_TEXT ? 0 : /실록$/.test(l.book) ? 2 : 1;
   // 칸 안에서는 시대 순서로 꽂는다 (era 속 네 자리 연도 기준, 연도가 없으면 맨 앞, 내 글은 넣은 순서)
   const yearOf = l => +(((l.era || '').match(/\d{4}/) || [0])[0]);
   all.map((l, i) => ({ l, i }))
      .sort((x, y) => (x.l.custom || y.l.custom) ? x.i - y.i : (yearOf(x.l) - yearOf(y.l)) || (x.i - y.i))
-     .forEach(({ l, i }) => groups[l.custom ? 2 : lessonLen(l) >= LONG_TEXT ? 1 : 0].items.push(bookHtml(l, i)));
-  groups[2].items.push(`<div class="book-slot"><button type="button" class="shelf-book add" id="addCustom" aria-label="새 공책: 내 글로 연습하기">
+     .forEach(({ l, i }) => groups[groupOf(l)].items.push(bookHtml(l, i)));
+  groups[3].items.push(`<div class="book-slot"><button type="button" class="shelf-book add" id="addCustom" aria-label="새 공책: 내 글로 연습하기">
       <span class="label"><b>＋ 새 공책</b></span></button></div>`);
-  $('shelves').innerHTML = groups.map(g => `
+  $('shelves').innerHTML = groups.filter(g => g.items.length).map(g => `
     <section class="shelf" aria-label="${g.name}">
       <div class="shelf-row">${g.items.join('')}</div>
       <div class="plank"><span class="shelf-name">${g.name}<small>${g.name === '내 글' ? all.filter(l => l.custom).length : g.items.length}권</small></span></div>
