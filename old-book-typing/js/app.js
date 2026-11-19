@@ -206,7 +206,9 @@ function buildGlosses(){
     let cum = 0;
     const bounds = lens.map(n => (cum += n) / total);
 
-    const words = clean(sentence).split(' ').map(w => Hangul.graphemes(w));
+    // 띄어쓰기 없이 긴 구절(예: 인명·숫자가 이어진 한문)은 8자씩 끊어야 여러 열에 고르게 나뉜다
+    const words = clean(sentence).split(' ').map(w => Hangul.graphemes(w))
+      .flatMap(g => g.length <= 8 ? [g] : Array.from({ length: Math.ceil(g.length / 8) }, (_, k) => g.slice(k * 8, k * 8 + 8)));
     const srcTotal = words.reduce((a, w) => a + w.length, 0) || 1;
     const perCol = sc.map(() => []);
     let before = 0;
@@ -357,9 +359,62 @@ function loadLesson(i, { scroll = true, save = true } = {}){
   const n = allLessons().length;
   state.idx = ((i % n) + n) % n;
   render();
-  if(scroll) $('practice').scrollIntoView({ behavior:'smooth', block:'start' });
-  typing.focus({ preventScroll:true });
+  // 타자 화면 안에서 글을 바꾸면(다음 문헌, 이전/다음 단추) 주소만 바꿔 둔다 — 뒤로 가기는 책장으로
+  if(view === 'read') history.replaceState(null, '', '#read/' + encodeURIComponent(curLesson().id));
+  if(scroll) window.scrollTo(0, 0);
+  if(view === 'read') typing.focus({ preventScroll:true });
 }
+
+/* ---------------- 화면 전환 ----------------
+   #           첫 화면 (소개, 시작하기, 기록)
+   #shelf      책장
+   #read/문헌id 타자 화면
+   #records · #about · #license  첫 화면의 그 구역으로 */
+let view = 'home', cameFromShelf = false;
+const VIEWS = { home:'viewHome', shelf:'viewShelf', read:'viewRead' };
+function route(){
+  const h = decodeURIComponent(location.hash.slice(1));
+  let next = 'home', anchor = null;
+  if(h === 'shelf') next = 'shelf';
+  else if(h.startsWith('read')){
+    next = 'read';
+    const i = allLessons().findIndex(l => l.id === h.split('/')[1]);
+    if(i >= 0 && i !== state.idx) loadLesson(i, { scroll:false });
+  }
+  else if(['records', 'about', 'license'].includes(h)) anchor = h;
+  showView(next, anchor);
+}
+function showView(next, anchor){
+  if(view === 'read' && next !== 'read'){            // 타자 화면을 떠날 때: 크게 보기 끄고, 진행 저장(blur)
+    if(isFocus()) setFocus(false);
+    typing.blur();
+  }
+  cameFromShelf = view === 'shelf' && next === 'read';
+  view = next;
+  for(const [k, id] of Object.entries(VIEWS)) $(id).hidden = k !== next;
+  document.querySelectorAll('.topnav a[data-nav]').forEach(a => a.classList.toggle('active', a.dataset.nav === (anchor || next)));
+  if(next === 'shelf') renderCards();
+  if(next === 'home') updateResume();
+  if(anchor) $(anchor).scrollIntoView();
+  else window.scrollTo(0, 0);
+  if(next === 'read'){
+    requestAnimationFrame(() => { update(); centerCurrentColumn(false); });
+    typing.focus({ preventScroll:true });           // 바로 치면 한글 입력기를 거치도록
+  }
+}
+// 첫 화면의 '이어 치기': 가장 최근에 치다 만 글
+function updateResume(){
+  const btn = $('resumeBtn');
+  const ids = new Set(allLessons().map(l => l.id));
+  const last = Object.entries(store.data.progress).filter(([id, p]) => ids.has(id) && p.value).sort((a, b) => (b[1].at || 0) - (a[1].at || 0))[0];
+  btn.hidden = !last;
+  if(!last) return;
+  const l = allLessons().find(x => x.id === last[0]);
+  const pct = Math.round([...last[1].value].length / lessonLen(l) * 100);
+  btn.href = '#read/' + encodeURIComponent(l.id);
+  btn.textContent = `이어 치기 · ${l.title || l.book} ${pct}%`;
+}
+window.addEventListener('hashchange', route);
 
 /* ---------------- 5. 입력 판정 ---------------- */
 const showChar  = c => c === ' ' ? '␣' : c;
@@ -701,7 +756,7 @@ function saveCustom(e){
   store.save();
   $('customName').value = ''; $('customText').value = '';
   closeCustom();
-  loadLesson(allLessons().length - 1);
+  location.hash = 'read/' + encodeURIComponent(allLessons()[allLessons().length - 1].id);
 }
 function deleteCustom(id){
   const list = store.data.custom;
@@ -785,7 +840,7 @@ $('shelves').addEventListener('click', e => {
   if(del){ deleteCustom(del.dataset.del); return; }
   if(e.target.closest('#addCustom')){ openCustom(); return; }
   const book = e.target.closest('.shelf-book[data-i]');
-  if(book) loadLesson(+book.dataset.i);
+  if(book) location.hash = 'read/' + encodeURIComponent(allLessons()[+book.dataset.i].id);
 });
 $('customForm').addEventListener('submit', saveCustom);
 $('customCancel').addEventListener('click', closeCustom);
@@ -795,14 +850,8 @@ $('clearRecords').addEventListener('click', () => {
   store.data.records = []; store.save(); renderRecords(); renderCards(); updateStats();
 });
 
-// 위쪽 메뉴: 보고 있는 구역을 표시
-const navLinks = [...document.querySelectorAll('.topnav a')];
-const io = new IntersectionObserver(entries => {
-  entries.forEach(en => {
-    if(en.isIntersecting) navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + en.target.id));
-  });
-}, { rootMargin:'-45% 0px -50% 0px' });
-['practice','library','records','about'].forEach(id => io.observe($(id)));
+// ← 책장: 책장에서 들어왔으면 브라우저 뒤로 가기와 같게, 아니면(주소로 바로 들어온 경우) 책장으로
+$('backBtn').addEventListener('click', () => { if(cameFromShelf) history.back(); else location.hash = 'shelf'; });
 
 // 키보드
 document.addEventListener('keydown', e => {
@@ -814,7 +863,7 @@ document.addEventListener('keydown', e => {
   }
   if(!$('customOverlay').hidden){ if(e.key === 'Escape') closeCustom(); return; }
 
-  if(e.ctrlKey && !e.isComposing && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')){
+  if(view === 'read' && e.ctrlKey && !e.isComposing && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')){
     e.preventDefault();
     loadLesson(state.idx + (e.key === 'ArrowRight' ? 1 : -1), { scroll:false });
     return;
@@ -881,5 +930,4 @@ applyTheme(); applySize(); applyToggles();
 state.idx = Math.max(0, allLessons().findIndex(l => l.id === settings.lastId));
 render();
 renderRecords();
-// 처음부터 입력창이 켜져 있어야 첫 키도 한글 입력기를 거친다.
-typing.focus({ preventScroll:true });
+route();     // 주소에 맞는 화면을 연다 (타자 화면이면 입력창도 켠다)
